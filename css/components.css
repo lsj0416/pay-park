@@ -289,6 +289,10 @@
 .goal-list dt, .detail-list dt { color: var(--color-text-secondary); }
 .goal-list dd, .detail-list dd { margin: 0; color: var(--color-text-primary); font-weight: 700; text-align: right; }
 
+.hero-card .goal-list > div { border-bottom-color: rgb(255 255 255 / 24%); }
+.hero-card .goal-list dt { color: rgb(255 255 255 / 78%); }
+.hero-card .goal-list dd { color: var(--color-text-inverse); }
+
 .product-card { display: grid; gap: 10px; padding: 17px; }
 .product-card__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .product-card__bank, .product-card__name, .product-card__meta, .product-card__rate, .product-card__note { margin: 0; }
