@@ -134,6 +134,19 @@ export function renderGoalList(container, goals = [], remainingLiving = null) {
   container.replaceChildren(fragment);
 }
 
+export function renderGoalChips(container, goals = []) {
+  if (!container) return;
+  const fragment = document.createDocumentFragment();
+  goals.forEach((goal) => {
+    const chip = document.createElement("span");
+    chip.className = goal.id === "emergency" ? "goal-chip goal-chip--warning" : "goal-chip";
+    chip.dataset.goalId = goal.id ?? "";
+    chip.textContent = `${goal.label ?? "목표 자금"} · ${renderMoney(goal.amount)}`;
+    fragment.append(chip);
+  });
+  container.replaceChildren(fragment);
+}
+
 export function renderProductCards(container, productItems = []) {
   if (!container) return;
   const fragment = document.createDocumentFragment();

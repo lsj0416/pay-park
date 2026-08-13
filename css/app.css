@@ -18,6 +18,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 
 .app-shell { width: 100%; max-width: 430px; min-height: 100vh; min-height: 100dvh; margin: 0 auto; background: var(--color-bg-canvas); }
 
+.app-shell:has(.screen[data-screen="home"]:not([hidden])) > .web-header,
+.app-shell:has(.screen[data-screen="result"]:not([hidden])) > .web-header,
+.app-shell:has(.screen[data-screen="ai-plan"]:not([hidden])) > .web-header,
+.app-shell:has(.screen[data-screen="ai-result"]:not([hidden])) > .web-header {
+  display: flex;
+}
+
 .screen {
   --sticky-actions-space: 104px;
   display: flex;
@@ -43,16 +50,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .deduction-row { display: flex; justify-content: space-between; gap: 16px; color: var(--color-text-secondary); font-size: .875rem; }
 .deduction-row strong { color: var(--color-text-primary); }
 
-.pill-actions { display: flex; gap: 8px; }
-.pill-actions .pill-button--primary { flex: 1; }
-.plan-results { display: grid; gap: 20px; }
 .ai-plan-layout__left,
-.ai-plan-layout__right { display: grid; gap: 20px; min-width: 0; }
-.ai-plan-layout__right { display: none; }
-.screen__content:has([data-plan-results]:not([hidden])) > .ai-plan-layout__right { display: grid; }
-.adjusted-budget { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 14px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--color-border-default); }
-.adjusted-budget__old { color: var(--color-text-tertiary); font-size: .8125rem; }
-.adjusted-budget__new { color: var(--color-text-brand); font-size: 1.0625rem; font-weight: 800; }
+.ai-plan-layout__right,
+.result-layout__left,
+.result-layout__right,
+.applied-result-layout__left,
+.applied-result-layout__right { display: grid; gap: 20px; min-width: 0; }
 .product-list { display: grid; gap: 10px; }
 .product-note { margin: 0; color: var(--color-text-secondary); font-size: .75rem; line-height: 1.5; }
 
@@ -61,19 +64,23 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .mini-stat span, .mini-stat strong { display: block; }
 .mini-stat span { color: rgb(255 255 255 / 72%); font-size: .75rem; }
 .mini-stat strong { margin-top: 4px; font-size: .9375rem; }
+.mini-stat__before { margin-top: 2px; color: rgb(255 255 255 / 60%); font-size: .6875rem; }
+.mini-stat__before s { text-decoration: line-through; }
 .progress { height: 8px; margin-top: 18px; overflow: hidden; border-radius: var(--radius-pill); background: rgb(255 255 255 / 25%); }
 .progress__bar { display: block; width: var(--progress, 0%); height: 100%; border-radius: inherit; background: #fff; }
 
-.applied-badge { display: flex; align-items: center; gap: 12px; padding: 16px 18px; border-radius: var(--radius-card); background: var(--color-bg-brand-soft); color: var(--color-text-brand); }
-.applied-badge__icon { display: grid; place-items: center; flex: 0 0 28px; height: 28px; border-radius: 50%; background: var(--color-bg-brand); color: #fff; font-weight: 800; }
-.applied-badge p { margin: 0; font-size: .8125rem; }
-.applied-badge strong { display: block; margin-top: 2px; font-size: .9375rem; }
-
 .home-period { margin: 0; color: var(--color-text-secondary); font-size: .8125rem; }
 .home-title { margin: 6px 0 20px; font-size: clamp(1.65rem, 7.5vw, 2rem); line-height: 1.32; letter-spacing: -.04em; }
-.home-empty { flex: 1; display: flex; flex-direction: column; }
-.home-empty__visual { display: grid; place-items: center; min-height: 210px; margin: 14px 0 28px; border-radius: 24px; background: var(--color-bg-brand-soft); }
-.home-empty__mark { display: grid; place-items: center; width: 96px; height: 96px; border-radius: 30px; background: var(--color-bg-brand); color: #fff; font-size: 2rem; font-weight: 900; box-shadow: 0 14px 28px rgb(27 100 218 / 22%); }
+.home-empty { flex: 1; display: flex; flex-direction: column; gap: 14px; }
+.home-empty__trust {
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-card);
+  background: var(--color-bg-surface);
+  color: var(--color-text-secondary);
+  font-size: .75rem;
+}
 .home-dashboard,
 .home-dashboard__left,
 .home-dashboard__right { display: grid; gap: 20px; }
@@ -97,7 +104,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 
 @media (min-width: 768px) {
   .app-shell { max-width: var(--content-max-tablet); }
-  .web-header { display: flex; padding: 0 var(--space-page); }
+  .web-header { display: flex; }
+  .web-header__privacy-pill { display: none; }
+  .web-header__calc-link,
+  .web-header__note { display: inline-flex; }
   .screen { min-height: calc(100dvh - 64px); padding-bottom: 24px; }
   .sticky-actions {
     position: static;
@@ -112,12 +122,23 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   .text-field,
   .segmented-control,
   .field-group { width: 100%; }
+
+  .sample-result-card__metrics { grid-template-columns: repeat(3, 1fr); }
+  .sample-result-card__metric--extra { display: grid; }
+  .screen[data-screen="home"] [data-home-view="empty"] .sticky-actions { grid-auto-flow: column; grid-template-columns: 1fr 1fr; }
 }
 
 @media (min-width: 1440px) {
   .app-shell { max-width: var(--content-max-desktop); }
   .web-header { padding-inline: 0; }
   .screen { padding-inline: 0; }
+
+  .home-empty__layout {
+    grid-template-columns: var(--desktop-wide-left) var(--desktop-wide-right);
+    align-items: start;
+    column-gap: 40px;
+  }
+  .home-empty__intro { display: grid; align-content: start; }
 
   .screen[data-screen="period"],
   .screen[data-screen="income"],
@@ -168,6 +189,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 
   .ai-plan-layout__left { grid-column: 1; }
   .ai-plan-layout__right { grid-column: 2; }
+
+  .screen[data-screen="result"] .result-layout,
+  .screen[data-screen="ai-result"] .applied-result-layout {
+    grid-template-columns: 1fr 1fr;
+    column-gap: 32px;
+    align-items: start;
+  }
 
   .home-dashboard {
     grid-template-columns: var(--desktop-wide-left) var(--desktop-wide-right);

@@ -9,8 +9,16 @@
   --color-text-tertiary: #8b95a1;
   --color-text-inverse: #ffffff;
   --color-border-default: #e5e8eb;
-  --color-danger: #d92d20;
+  --color-border-focus: #3182f6;
+  --color-danger: #e54949;
+  --color-bg-danger-soft: #fff0f0;
+  --color-text-warning: #b76e00;
+  --color-bg-warning-soft: #fff7e6;
+  --color-success: #008f68;
+  --color-bg-success-soft: #e8f8f2;
   --radius-card: 12px;
+  --radius-card-lg: 20px;
+  --radius-card-md: 16px;
   --radius-input: 10px;
   --radius-step-tab: 14px;
   --radius-pill: 999px;
