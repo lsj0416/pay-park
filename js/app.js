@@ -484,8 +484,7 @@ document.addEventListener("click", (event) => {
     }
     case "build-plan": {
       const goalText = query('[data-field="goal-text"]')?.value.trim() ?? "";
-      setHidden('[data-error="goal-text"]', Boolean(goalText));
-      if (!goalText) break;
+      setHidden('[data-error="goal-text"]', true);
       draftPlan = planWithDaily(buildPlan(goalText, currentBudget(appState).availableAmount), appState);
       renderPlan(appState);
       query('[data-plan-results]')?.scrollIntoView?.({ block: "start", behavior: "smooth" });
