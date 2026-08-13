@@ -290,8 +290,3 @@
 .notice::before { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border: 1.5px solid currentColor; border-radius: 50%; content: "i"; font-size: .75rem; font-weight: 800; }
 .notice p { margin: 0; }
 .notice--danger { background: #fff0ee; color: var(--color-danger); }
-
-.bottom-nav { position: fixed; z-index: 12; right: 0; bottom: 0; left: 0; display: grid; grid-template-columns: 1fr 1fr; width: 100%; max-width: 430px; margin: 0 auto; padding: 8px var(--space-page) calc(8px + env(safe-area-inset-bottom)); border-top: 1px solid var(--color-border-default); background: rgb(255 255 255 / 96%); }
-.bottom-nav__item { display: grid; place-items: center; gap: 2px; min-height: 52px; border: 0; background: transparent; color: var(--color-text-tertiary); font: inherit; font-size: .75rem; }
-.bottom-nav__item[aria-current="page"] { color: var(--color-text-brand); font-weight: 700; }
-.bottom-nav__icon { font-size: 1.2rem; line-height: 1; }
