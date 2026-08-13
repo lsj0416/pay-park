@@ -393,11 +393,12 @@ function renderHome(state) {
   const result = state.result;
   const daily = dailyFor(result.availableAmount, state);
   const plan = state.plan ? planWithDaily(state.plan, state) : null;
+  const effectiveAvailable = plan ? plan.remainingLiving : result.availableAmount;
   const percent = result.estimatedTakeHome > 0
-    ? Math.min(100, Math.max(0, Math.round((result.availableAmount / result.estimatedTakeHome) * 100)))
+    ? Math.min(100, Math.max(0, Math.round((effectiveAvailable / result.estimatedTakeHome) * 100)))
     : 0;
   setText('[data-output="home-period"]', periodText(state.period));
-  setText('[data-output="home-available-amount"]', renderMoney(result.availableAmount));
+  setText('[data-output="home-available-amount"]', renderMoney(effectiveAvailable));
   setText('[data-output="home-daily-budget"]', renderMoney(plan ? plan.adjustedDailyBudget : daily.dailyBudget));
   setText('[data-output="home-original-daily-budget"]', renderMoney(daily.dailyBudget));
   setHidden('.mini-stat__before', !plan);
