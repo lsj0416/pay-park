@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="description" content="세금과 저축까지 뺀 이번 달 진짜 가용 자금을 계산하고, AI와 함께 나만의 활용 계획을 세워보는 이번달페이 프로토타입" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="ko_KR" />
+  <meta property="og:title" content="이번달페이 — 이번 달 진짜 쓸 수 있는 돈" />
+  <meta property="og:description" content="세금과 저축까지 뺀 이번 달 진짜 가용 자금을 계산하고, AI와 함께 나만의 활용 계획을 세워보는 이번달페이 프로토타입" />
+  <title>이번달페이</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <section class="screen" data-screen="home" aria-labelledby="home-title">
+      <div class="home-empty" data-home-view="empty">
+        <header class="screen-header">
+          <p class="screen-header__eyebrow">이번달페이</p>
+          <h1 id="home-title">이번 달 진짜<br />쓸 수 있는 돈을 알아보세요</h1>
+          <p>세금·저축까지 빼고, 이번 달 진짜 쓸 수 있는 돈을 확인해보세요.</p>
+        </header>
+        <div class="home-empty__visual" aria-hidden="true"><span class="home-empty__mark">₩</span></div>
+        <div class="sticky-actions">
+          <button class="primary-button" type="button" data-action="start-calculation">내 가용 자금 계산하기</button>
+        </div>
+      </div>
+
+      <div class="home-dashboard" data-home-view="dashboard" hidden>
+        <header>
+          <p class="home-period" data-output="home-period">8월 10일 – 9월 9일</p>
+          <h2 class="home-title">이번 달<br />진짜 쓸 수 있는 돈이에요</h2>
+        </header>
+        <article class="hero-card">
+          <p class="hero-card__label">이번 달 가용 자금</p>
+          <p class="hero-card__value" data-output="home-available-amount">0원</p>
+          <div class="mini-stats" aria-label="가용 자금 요약">
+            <div class="mini-stat"><span>하루 예산</span><strong data-output="home-daily-budget">0원</strong></div>
+            <div class="mini-stat"><span>남은 기간</span><strong data-output="home-remaining-days">0일</strong></div>
+          </div>
+          <div class="progress" role="progressbar" aria-label="실수령액 중 가용 자금 비율" aria-valuemin="0" aria-valuemax="100" data-output="home-progress"><span class="progress__bar"></span></div>
+          <p class="hero-card__description" data-output="home-available-percent">실수령액 중 0%를 자유롭게 쓸 수 있어요.</p>
+          <div class="home-plan-summary" data-home-plan hidden>
+            <h3>AI 계획 요약</h3>
+            <p class="hero-card__description">조정된 하루 예산 <strong data-output="home-adjusted-daily-budget">0원</strong></p>
+            <dl class="goal-list" data-output="home-allocations"></dl>
+          </div>
+        </article>
+        <article class="content-card">
+          <h3 class="card-title">계산 근거</h3>
+          <dl class="detail-list">
+            <div><dt>예상 실수령액</dt><dd data-output="home-take-home">0원</dd></div>
+            <div><dt>− 고정지출</dt><dd data-output="home-fixed-expenses">0원</dd></div>
+            <div><dt>− 저축·투자</dt><dd data-output="home-saving">0원</dd></div>
+            <div><dt>= 가용 자금</dt><dd data-output="home-calculated-available">0원</dd></div>
+          </dl>
+        </article>
+        <aside class="notice"><p>세금·공제는 근사 계산이며 실제 급여명세서와 다를 수 있어요.</p></aside>
+        <div class="sticky-actions">
+          <button class="primary-button" type="button" data-action="restart-calculation">이번 달 다시 계산하기</button>
+        </div>
+      </div>
+      <nav class="bottom-nav" aria-label="하단 메뉴">
+        <button class="bottom-nav__item" type="button" aria-current="page" data-action="go-home"><span class="bottom-nav__icon" aria-hidden="true">⌂</span><span>홈</span></button>
+        <button class="bottom-nav__item" type="button" disabled aria-disabled="true" data-action="open-my"><span class="bottom-nav__icon" aria-hidden="true">●</span><span>마이</span></button>
+      </nav>
+    </section>
+
+    <section class="screen" data-screen="period" aria-labelledby="period-title" hidden>
+      <header class="screen-header">
+        <div class="screen-header__top"><button class="back-button" type="button" data-action="go-home" aria-label="홈으로 돌아가기">←</button></div>
+        <h2 id="period-title">예산 기간 설정</h2>
+        <p>월급일을 기준으로 이번 달 예산 기간을 정해요.</p>
+      </header>
+      <nav class="step-tabs" aria-label="가용 자금 계산 단계">
+        <button class="step-tab" type="button" data-action="go-period" aria-current="step"><span class="step-tab__title">1 예산 기간</span><span class="step-tab__status">입력 중</span></button>
+        <button class="step-tab" type="button" data-action="go-income" disabled><span class="step-tab__title">2 소득 입력</span><span class="step-tab__status">잠김</span></button>
+        <button class="step-tab" type="button" data-action="go-deductions" disabled><span class="step-tab__title">3 고정비·저축</span><span class="step-tab__status">잠김</span></button>
+        <button class="step-tab" type="button" data-action="go-result" disabled><span class="step-tab__title">4 계산 결과</span><span class="step-tab__status">잠김</span></button>
+      </nav>
+      <form class="form-stack" data-form="period" novalidate>
+        <article class="content-card payday-card">
+          <h3 class="card-title">월급일</h3>
+          <div class="chip-list" aria-label="월급일 선택">
+            <button class="chip" type="button" data-action="select-payday" data-value="1" aria-pressed="false">1일</button>
+            <button class="chip" type="button" data-action="select-payday" data-value="5" aria-pressed="false">5일</button>
+            <button class="chip" type="button" data-action="select-payday" data-value="10" aria-pressed="true">10일</button>
+            <button class="chip" type="button" data-action="select-payday" data-value="15" aria-pressed="false">15일</button>
+            <button class="chip" type="button" data-action="select-payday" data-value="20" aria-pressed="false">20일</button>
+            <button class="chip" type="button" data-action="select-payday" data-value="25" aria-pressed="false">25일</button>
+            <button class="chip" type="button" data-action="select-payday" data-value="27" aria-pressed="false">27일</button>
+            <button class="chip" type="button" data-action="select-payday" data-value="30" aria-pressed="false">30일</button>
+          </div>
+          <input type="hidden" name="payday" value="10" data-field="payday" />
+          <p class="field-error" data-error="payday" role="alert" hidden>월급일을 선택해주세요.</p>
+        </article>
+        <article class="period-preview" aria-live="polite">
+          <span>이번 달 예산 기간</span>
+          <strong data-output="period-preview">8월 10일 – 9월 9일 · 31일</strong>
+          <span class="sr-only"><time data-output="period-start">8월 10일</time><time data-output="period-end">9월 9일</time></span>
+        </article>
+        <div class="sticky-actions"><button class="primary-button" type="submit" data-action="save-period">다음</button></div>
+      </form>
+    </section>
+
+    <section class="screen" data-screen="income" aria-labelledby="income-title" hidden>
+      <header class="screen-header">
+        <div class="screen-header__top"><button class="back-button" type="button" data-action="go-period" aria-label="예산 기간으로 돌아가기">←</button></div>
+        <h2 id="income-title">소득 입력</h2>
+        <p>이번 달 들어오는 급여를 알려주세요.</p>
+      </header>
+      <nav class="step-tabs" aria-label="가용 자금 계산 단계">
+        <button class="step-tab" type="button" data-action="go-period" data-complete="true"><span class="step-tab__title">✓ 예산 기간</span><span class="step-tab__status" data-output="step-period-summary">8/10~</span></button>
+        <button class="step-tab" type="button" data-action="go-income" aria-current="step"><span class="step-tab__title">2 소득 입력</span><span class="step-tab__status">입력 중</span></button>
+        <button class="step-tab" type="button" data-action="go-deductions" disabled><span class="step-tab__title">3 고정비·저축</span><span class="step-tab__status">잠김</span></button>
+        <button class="step-tab" type="button" data-action="go-result" disabled><span class="step-tab__title">4 계산 결과</span><span class="step-tab__status">잠김</span></button>
+      </nav>
+      <form class="form-stack" data-form="income" novalidate>
+        <div class="field-group">
+          <span class="field-label">입력 기준</span>
+          <div class="segmented-control" role="group" aria-label="소득 입력 기준">
+            <button class="segment-button" type="button" data-action="select-income-type" data-value="gross" aria-pressed="true">세전 월급</button>
+            <button class="segment-button" type="button" data-action="select-income-type" data-value="net" aria-pressed="false">실수령액</button>
+          </div>
+          <input type="hidden" value="gross" data-field="income-type" />
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="salary-amount" data-output="income-field-label">세전 월급</label>
+          <div class="money-field"><input id="salary-amount" name="salaryAmount" type="text" inputmode="numeric" autocomplete="off" placeholder="0" data-field="gross-salary" required /><span class="money-field__unit">원</span></div>
+          <p class="field-error" data-error="gross-salary" role="alert" hidden>금액을 입력해야 다음으로 갈 수 있어요.</p>
+        </div>
+        <article class="summary-card" data-income-deductions aria-live="polite">
+          <p class="summary-card__label">예상 실수령액</p>
+          <p class="summary-card__value" data-output="estimated-take-home">0원</p>
+          <div class="deduction-list">
+            <div class="deduction-row"><span>4대보험</span><strong data-output="insurance-deduction">−0원</strong></div>
+            <div class="deduction-row"><span>소득세 · 지방소득세</span><strong data-output="tax-deduction">−0원</strong></div>
+          </div>
+        </article>
+        <aside class="notice"><p>추정치 · 실제와 차이가 있을 수 있어요.</p></aside>
+        <div class="sticky-actions"><button class="primary-button" type="submit" data-action="save-income" disabled>다음</button></div>
+      </form>
+    </section>
+
+    <section class="screen" data-screen="deductions" aria-labelledby="deductions-title" hidden>
+      <header class="screen-header">
+        <div class="screen-header__top"><button class="back-button" type="button" data-action="go-income" aria-label="소득 입력으로 돌아가기">←</button></div>
+        <h2 id="deductions-title">고정비·저축</h2>
+        <p>매달 꼭 나가는 돈과 미리 모으는 돈을 적어주세요.</p>
+      </header>
+      <nav class="step-tabs" aria-label="가용 자금 계산 단계">
+        <button class="step-tab" type="button" data-action="go-period" data-complete="true"><span class="step-tab__title">✓ 예산 기간</span><span class="step-tab__status" data-output="step-period-summary">8/10~</span></button>
+        <button class="step-tab" type="button" data-action="go-income" data-complete="true"><span class="step-tab__title">✓ 소득 입력</span><span class="step-tab__status" data-output="step-income-summary">세전 320만</span></button>
+        <button class="step-tab" type="button" data-action="go-deductions" aria-current="step"><span class="step-tab__title">3 고정비·저축</span><span class="step-tab__status">입력 중</span></button>
+        <button class="step-tab" type="button" data-action="go-result" disabled><span class="step-tab__title">4 계산 결과</span><span class="step-tab__status">잠김</span></button>
+      </nav>
+      <form class="form-stack" data-form="deductions" novalidate>
+        <article class="item-list-card" data-list="fixed-expenses">
+          <div class="item-list-card__header"><h3>고정비</h3><p class="item-list-card__total" data-output="fixed-expenses-total">− 770,000원</p></div>
+          <div class="item-list" data-output="fixed-expense-items">
+            <div class="item-row" data-item-id="fixed-rent"><label class="item-name-field"><span class="sr-only">고정비 항목 이름</span><input type="text" value="월세" data-field="fixed-expense-name" /></label><label class="money-field"><span class="sr-only">월세 금액</span><input type="text" value="700,000" inputmode="numeric" data-field="fixed-expense-amount" /><span class="money-field__unit">원</span></label><button class="delete-button" type="button" data-action="remove-fixed-expense" aria-label="월세 삭제">✕</button></div>
+            <div class="item-row" data-item-id="fixed-phone"><label class="item-name-field"><span class="sr-only">고정비 항목 이름</span><input type="text" value="통신비" data-field="fixed-expense-name" /></label><label class="money-field"><span class="sr-only">통신비 금액</span><input type="text" value="50,000" inputmode="numeric" data-field="fixed-expense-amount" /><span class="money-field__unit">원</span></label><button class="delete-button" type="button" data-action="remove-fixed-expense" aria-label="통신비 삭제">✕</button></div>
+            <div class="item-row" data-item-id="fixed-subscription"><label class="item-name-field"><span class="sr-only">고정비 항목 이름</span><input type="text" value="구독료" data-field="fixed-expense-name" /></label><label class="money-field"><span class="sr-only">구독료 금액</span><input type="text" value="20,000" inputmode="numeric" data-field="fixed-expense-amount" /><span class="money-field__unit">원</span></label><button class="delete-button" type="button" data-action="remove-fixed-expense" aria-label="구독료 삭제">✕</button></div>
+          </div>
+          <div class="preset-area"><button class="chip" type="button" data-action="add-fixed-preset" data-value="관리비">+ 관리비</button><button class="chip" type="button" data-action="add-fixed-preset" data-value="보험료">+ 보험료</button><button class="chip" type="button" data-action="add-fixed-custom">+ 직접 추가</button></div>
+        </article>
+        <article class="item-list-card" data-list="savings">
+          <div class="item-list-card__header"><h3>기존 저축·투자</h3><p class="item-list-card__total" data-output="saving-items-total">− 500,000원</p></div>
+          <div class="item-list" data-output="saving-items">
+            <div class="item-row" data-item-id="saving-installment"><label class="item-name-field"><span class="sr-only">저축 항목 이름</span><input type="text" value="적금" data-field="saving-name" /></label><label class="money-field"><span class="sr-only">적금 금액</span><input type="text" value="500,000" inputmode="numeric" data-field="saving-amount" /><span class="money-field__unit">원</span></label><button class="delete-button" type="button" data-action="remove-saving" aria-label="적금 삭제">✕</button></div>
+          </div>
+          <div class="preset-area"><button class="chip" type="button" data-action="add-saving-preset" data-value="주식 정기매수">+ 주식 정기매수</button><button class="chip" type="button" data-action="add-saving-preset" data-value="연금">+ 연금</button><button class="chip" type="button" data-action="add-saving-preset" data-value="ISA">+ ISA</button><button class="chip" type="button" data-action="add-saving-custom">+ 직접 추가</button></div>
+        </article>
+        <article class="summary-card"><p class="summary-card__label">미리 빠지는 돈</p><p class="summary-card__value" data-output="deductions-total">총 1,270,000원</p></article>
+        <div class="sticky-actions"><button class="primary-button" type="submit" data-action="calculate-result">가용 자금 계산하기</button></div>
+      </form>
+    </section>
+
+    <section class="screen" data-screen="result" aria-labelledby="result-title" hidden>
+      <header class="screen-header">
+        <div class="screen-header__top"><button class="back-button" type="button" data-action="go-deductions" aria-label="고정비와 저축으로 돌아가기">←</button></div>
+        <h2 id="result-title">계산 결과</h2>
+        <p>이번 달에 실제로 쓸 수 있는 돈이에요.</p>
+      </header>
+      <nav class="step-tabs" aria-label="가용 자금 계산 단계">
+        <button class="step-tab" type="button" data-action="go-period" data-complete="true"><span class="step-tab__title">✓ 예산 기간</span><span class="step-tab__status" data-output="step-period-summary">8/10~</span></button>
+        <button class="step-tab" type="button" data-action="go-income" data-complete="true"><span class="step-tab__title">✓ 소득 입력</span><span class="step-tab__status" data-output="step-income-summary">세전 320만</span></button>
+        <button class="step-tab" type="button" data-action="go-deductions" data-complete="true"><span class="step-tab__title">✓ 고정비·저축</span><span class="step-tab__status" data-output="step-deductions-summary">총 127만</span></button>
+        <button class="step-tab" type="button" data-action="go-result" aria-current="step"><span class="step-tab__title">4 계산 결과</span><span class="step-tab__status">입력 중</span></button>
+      </nav>
+      <div class="section-stack">
+        <article class="hero-card"><p class="hero-card__label">이번 달 진짜 가용 자금</p><p class="hero-card__value" data-output="available-amount">0원</p></article>
+        <article class="summary-card"><p class="summary-card__label">하루 예산</p><p class="summary-card__value" data-output="daily-budget">0원</p><p class="summary-card__description"><span data-output="remaining-days">0일</span> 기준</p></article>
+        <article class="content-card"><h3 class="card-title">계산 근거</h3><dl class="detail-list"><div><dt>실수령</dt><dd data-output="result-take-home">0원</dd></div><div><dt>− 고정비</dt><dd data-output="result-fixed-expenses">0원</dd></div><div><dt>− 저축</dt><dd data-output="result-saving">0원</dd></div></dl></article>
+        <aside class="notice notice--danger" data-warning="zero-available" role="alert" hidden><p>고정비와 저축이 예상 실수령액보다 커요.</p></aside>
+        <button class="link-card" type="button" data-action="open-ai-plan"><span><span class="link-card__title">AI와 활용 계획 세우기</span><span class="link-card__description">남은 돈을 목표에 맞게 나눠볼까요?</span></span><span class="link-card__arrow" aria-hidden="true">→</span></button>
+        <aside class="notice"><p>가용 자금은 입력값을 기반으로 한 참고용 추정치예요.</p></aside>
+        <div class="sticky-actions"><button class="primary-button" type="button" data-action="go-home">완료</button></div>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="ai-plan" aria-labelledby="ai-plan-title" hidden>
+      <header class="screen-header">
+        <div class="screen-header__top"><button class="back-button" type="button" data-action="back-to-result" aria-label="계산 결과로 돌아가기">←</button></div>
+        <h2 id="ai-plan-title">AI 활용 계획 및 추천 상품</h2>
+      </header>
+      <div class="screen__content">
+        <article class="summary-card"><p class="summary-card__label">이번 달 가용 자금</p><p class="summary-card__value" data-output="plan-available-amount">0원</p><p class="summary-card__description">현재 하루 예산 <span data-output="plan-daily-budget">0원</span> · <span data-output="plan-remaining-days">0일</span></p></article>
+        <section class="section-block" id="goal-input" aria-labelledby="goal-input-title">
+          <div class="section-heading"><h3 id="goal-input-title">이번 달 특별 지출이나 모으고 싶은 목표가 있나요?</h3></div>
+          <div class="field-group"><label class="sr-only" for="goal-text">이번 달 목표</label><div class="text-field"><textarea id="goal-text" name="goalText" data-field="goal-text" placeholder="예) 이번 달 말에 여행 30만 원, 비상금 20만 원을 모으고 싶어요."></textarea></div><p class="field-error" data-error="goal-text" role="alert" hidden>목표를 입력해주세요.</p></div>
+          <div class="pill-actions"><button class="pill-button pill-button--primary" type="button" data-action="build-plan">계획 세우기</button><button class="pill-button pill-button--secondary" type="button" data-action="fill-goal-example">예시</button></div>
+        </section>
+        <div class="plan-results" data-plan-results hidden>
+          <article class="content-card"><h3 class="card-title">배분안</h3><dl class="goal-list" data-output="plan-allocations"><div><dt>여행 준비금</dt><dd>300,000원</dd></div><div><dt>추가 비상금</dt><dd>200,000원</dd></div><div><dt>남은 생활비</dt><dd data-output="remaining-living">0원</dd></div></dl><div class="adjusted-budget"><span class="adjusted-budget__old"><s data-output="original-daily-budget">0원</s>에서 조정</span><strong class="adjusted-budget__new">조정된 하루 예산 <span data-output="adjusted-daily-budget">0원</span></strong></div></article>
+          <section class="section-block" aria-labelledby="products-title">
+            <div class="section-heading"><h3 id="products-title">저축상품 후보</h3><p>월 <span data-output="monthly-goal-total">0원</span> 목표에 맞춰 골라봤어요.</p></div>
+            <div class="toggle-row"><span>급할 때 꺼내 쓸 수 있어야 해요</span><label class="toggle-switch"><input type="checkbox" data-field="instant-withdraw" data-action="toggle-instant-withdraw" /><span class="toggle-switch__track"></span><span class="sr-only">수시 출금 상품 우선</span></label></div>
+            <div class="product-list" data-output="product-list">
+              <article class="product-card" data-product-id="todak-parking"><div class="product-card__top"><div><p class="product-card__bank">토닥은행</p><h4 class="product-card__name">토닥 파킹통장</h4></div><p class="product-card__rate">연 3.1%</p></div><p class="product-card__meta">자유입출금 · 기간 없음</p><p class="product-card__note">중도 출금 가능</p></article>
+              <article class="product-card" data-product-id="saerok-short-term"><div class="product-card__top"><div><p class="product-card__bank">새록저축은행</p><h4 class="product-card__name">6개월 단기적금</h4></div><p class="product-card__rate">연 4.5%</p></div><p class="product-card__meta">단기적금 · 6개월</p></article>
+              <article class="product-card" data-product-id="pureun-free-savings"><div class="product-card__top"><div><p class="product-card__bank">푸른은행</p><h4 class="product-card__name">자유적금 12M</h4></div><p class="product-card__rate">연 4.0%</p></div><p class="product-card__meta">정기적금 · 12개월</p></article>
+            </div>
+            <p class="product-note">금리 기준일 2026-08-01 · 가입 전 실제 조건을 꼭 확인하세요.</p>
+          </section>
+          <aside class="notice"><p>상품 정보는 프로토타입용 예시이며 가입 권유나 금융 자문이 아니에요.</p></aside>
+          <div class="sticky-actions"><button class="primary-button" type="button" data-action="apply-plan">계획 반영하고 결과로 돌아가기</button></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="ai-result" aria-labelledby="ai-result-title" hidden>
+      <header class="screen-header">
+        <div class="screen-header__top"><button class="back-button" type="button" data-action="edit-plan" aria-label="AI 계획 수정으로 돌아가기">←</button></div>
+        <h2 id="ai-result-title">계산 결과</h2>
+        <p>이번 달에 실제로 쓸 수 있는 돈이에요.</p>
+      </header>
+      <nav class="step-tabs" aria-label="완료된 가용 자금 계산 단계">
+        <button class="step-tab" type="button" data-action="go-period" data-complete="true"><span class="step-tab__title">✓ 예산 기간</span><span class="step-tab__status" data-output="step-period-summary">8/10~</span></button>
+        <button class="step-tab" type="button" data-action="go-income" data-complete="true"><span class="step-tab__title">✓ 소득 입력</span><span class="step-tab__status" data-output="step-income-summary">세전 320만</span></button>
+        <button class="step-tab" type="button" data-action="go-deductions" data-complete="true"><span class="step-tab__title">✓ 고정비·저축</span><span class="step-tab__status" data-output="step-deductions-summary">총 127만</span></button>
+        <button class="step-tab" type="button" data-action="go-result" data-complete="true"><span class="step-tab__title">✓ 계산 결과</span><span class="step-tab__status">완료</span></button>
+      </nav>
+      <div class="section-stack">
+        <article class="hero-card"><p class="hero-card__label">이번 달 진짜 가용 자금</p><p class="hero-card__value" data-output="applied-total">0원</p></article>
+        <article class="summary-card"><p class="summary-card__label">하루 예산</p><p class="summary-card__value" data-output="applied-daily-budget">0원</p><p class="summary-card__description"><span data-output="applied-remaining-days">0일</span> 기준</p></article>
+        <article class="content-card"><h3 class="card-title">계산 근거</h3><dl class="detail-list"><div><dt>실수령</dt><dd data-output="applied-take-home">0원</dd></div><div><dt>− 고정비</dt><dd data-output="applied-fixed-expenses">0원</dd></div><div><dt>− 저축</dt><dd data-output="applied-saving">0원</dd></div></dl></article>
+        <article class="applied-badge"><span class="applied-badge__icon" aria-hidden="true">✓</span><p>AI 계획 적용됨<strong>조정된 하루 예산 <span data-output="applied-adjusted-daily-budget">0원</span></strong></p></article>
+        <button class="link-card" type="button" data-action="edit-plan"><span><span class="link-card__title">AI 활용 계획 다시 보기</span><span class="link-card__description">남은 돈을 목표에 맞게 나눠볼까요?</span></span><span class="link-card__arrow" aria-hidden="true">→</span></button>
+        <aside class="notice"><p>가용 자금은 입력값을 기반으로 한 참고용 추정치예요.</p></aside>
+        <div class="sticky-actions"><button class="primary-button" type="button" data-action="confirm-plan-home">홈으로</button></div>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

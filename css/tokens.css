@@ -1,0 +1,20 @@
+:root {
+  --color-bg-brand: #1b64da;
+  --color-bg-brand-soft: #e8f3ff;
+  --color-text-brand: #1b64da;
+  --color-bg-canvas: #f7f8fa;
+  --color-bg-surface: #ffffff;
+  --color-text-primary: #191f28;
+  --color-text-secondary: #6b7684;
+  --color-text-tertiary: #8b95a1;
+  --color-text-inverse: #ffffff;
+  --color-border-default: #e5e8eb;
+  --color-danger: #d92d20;
+  --radius-card: 12px;
+  --radius-input: 10px;
+  --radius-step-tab: 14px;
+  --radius-pill: 999px;
+  --shadow-card: 0 4px 8px rgb(0 0 0 / 8%);
+  --space-page: 24px;
+  font-family: "Noto Sans KR", Pretendard, "Apple SD Gothic Neo", system-ui, sans-serif;
+}

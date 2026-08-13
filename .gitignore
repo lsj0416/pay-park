@@ -1,0 +1,22 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+
+# Local tool state
+.gstack/
+.claude/settings.local.json
+
+# Netlify local state
+.netlify/
+
+# Node (not used by this static project, but ignore if ever added)
+node_modules/
+npm-debug.log*
+
+# Logs / temp
+*.log
+.tmp/
