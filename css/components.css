@@ -262,7 +262,7 @@
 .secondary-button { border: 1px solid var(--color-border-default); background: var(--color-bg-surface); color: var(--color-text-primary); }
 .primary-button:disabled, .secondary-button:disabled { cursor: not-allowed; opacity: .45; }
 
-.chip-list { display: flex; width: 100%; max-width: 100%; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+.chip-list { display: flex; flex-wrap: wrap; width: 100%; max-width: 100%; gap: 8px; overflow-x: auto; scrollbar-width: none; }
 .chip-list::-webkit-scrollbar { display: none; }
 .chip {
   flex: 0 0 auto;
