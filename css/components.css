@@ -1,5 +1,5 @@
 .web-header {
-  display: none;
+  display: flex;
   align-items: center;
   justify-content: space-between;
   height: 64px;
@@ -9,10 +9,14 @@
 }
 
 .web-header__logo {
+  border: 0;
+  padding: 0;
+  background: none;
   color: var(--color-text-primary);
   font: inherit;
   font-size: 1.125rem;
   font-weight: 700;
+  cursor: pointer;
 }
 
 .web-header__right { display: flex; align-items: center; gap: 16px; }
@@ -102,6 +106,7 @@
 
 .step-tabs::-webkit-scrollbar { display: none; }
 
+/* Desktop layout temporarily disabled — remove this comment wrapper to re-enable.
 @media (min-width: 1440px) {
   .step-tabs {
     flex-direction: column;
@@ -109,6 +114,7 @@
     overflow: visible;
   }
 }
+*/
 
 .step-tab {
   flex: 0 0 124px;
