@@ -46,6 +46,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .pill-actions { display: flex; gap: 8px; }
 .pill-actions .pill-button--primary { flex: 1; }
 .plan-results { display: grid; gap: 20px; }
+.ai-plan-layout__left,
+.ai-plan-layout__right { display: grid; gap: 20px; min-width: 0; }
+.ai-plan-layout__right { display: none; }
+.screen__content:has([data-plan-results]:not([hidden])) > .ai-plan-layout__right { display: grid; }
 .adjusted-budget { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 14px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--color-border-default); }
 .adjusted-budget__old { color: var(--color-text-tertiary); font-size: .8125rem; }
 .adjusted-budget__new { color: var(--color-text-brand); font-size: 1.0625rem; font-weight: 800; }
@@ -70,7 +74,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .home-empty { flex: 1; display: flex; flex-direction: column; }
 .home-empty__visual { display: grid; place-items: center; min-height: 210px; margin: 14px 0 28px; border-radius: 24px; background: var(--color-bg-brand-soft); }
 .home-empty__mark { display: grid; place-items: center; width: 96px; height: 96px; border-radius: 30px; background: var(--color-bg-brand); color: #fff; font-size: 2rem; font-weight: 900; box-shadow: 0 14px 28px rgb(27 100 218 / 22%); }
-.home-dashboard { display: grid; gap: 20px; }
+.home-dashboard,
+.home-dashboard__left,
+.home-dashboard__right { display: grid; gap: 20px; }
 .home-plan-summary { padding-top: 14px; border-top: 1px solid rgb(255 255 255 / 24%); }
 .home-plan-summary h3 { margin: 0 0 8px; font-size: .875rem; }
 
@@ -83,10 +89,96 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   .delete-button { width: 40px; }
 }
 
-@media (min-width: 431px) {
+@media (min-width: 431px) and (max-width: 767px) {
   body { padding: 24px 0; }
   .app-shell, .screen { min-height: calc(100dvh - 48px); }
   .app-shell { overflow: hidden; border: 1px solid var(--color-border-default); border-radius: 24px; box-shadow: var(--shadow-card); }
+}
+
+@media (min-width: 768px) {
+  .app-shell { max-width: var(--content-max-tablet); }
+  .web-header { display: flex; padding: 0 var(--space-page); }
+  .screen { min-height: calc(100dvh - 64px); padding-bottom: 24px; }
+  .sticky-actions {
+    position: static;
+    margin: 24px 0 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+  .money-field,
+  .text-field,
+  .segmented-control,
+  .field-group { width: 100%; }
+}
+
+@media (min-width: 1440px) {
+  .app-shell { max-width: var(--content-max-desktop); }
+  .web-header { padding-inline: 0; }
+  .screen { padding-inline: 0; }
+
+  .screen[data-screen="period"],
+  .screen[data-screen="income"],
+  .screen[data-screen="deductions"],
+  .screen[data-screen="result"],
+  .screen[data-screen="ai-result"] {
+    display: grid;
+    grid-template-columns: var(--sidebar-width-desktop) var(--content-col-desktop);
+    grid-template-areas:
+      "steps header"
+      "steps content";
+    justify-content: center;
+    align-content: start;
+    column-gap: var(--desktop-grid-gap);
+  }
+
+  .screen[data-screen="period"] > .screen-header,
+  .screen[data-screen="income"] > .screen-header,
+  .screen[data-screen="deductions"] > .screen-header,
+  .screen[data-screen="result"] > .screen-header,
+  .screen[data-screen="ai-result"] > .screen-header { grid-area: header; }
+
+  .screen[data-screen="period"] > .step-tabs,
+  .screen[data-screen="income"] > .step-tabs,
+  .screen[data-screen="deductions"] > .step-tabs,
+  .screen[data-screen="result"] > .step-tabs,
+  .screen[data-screen="ai-result"] > .step-tabs {
+    grid-area: steps;
+    align-self: start;
+    width: 100%;
+    margin: 4px 0 0;
+    padding: 0;
+  }
+
+  .screen[data-screen="period"] > .form-stack,
+  .screen[data-screen="income"] > .form-stack,
+  .screen[data-screen="deductions"] > .form-stack,
+  .screen[data-screen="result"] > .section-stack,
+  .screen[data-screen="ai-result"] > .section-stack { grid-area: content; }
+
+  .step-tab { flex: none; width: 100%; }
+
+  .screen[data-screen="ai-plan"] .screen__content {
+    grid-template-columns: var(--desktop-wide-left) var(--desktop-wide-right);
+    column-gap: 40px;
+    align-items: start;
+  }
+
+  .ai-plan-layout__left { grid-column: 1; }
+  .ai-plan-layout__right { grid-column: 2; }
+
+  .home-dashboard {
+    grid-template-columns: var(--desktop-wide-left) var(--desktop-wide-right);
+    gap: 40px;
+    align-items: start;
+  }
+
+  .home-dashboard__left,
+  .home-dashboard__right { min-width: 0; }
+  .home-dashboard__right > .sticky-actions { order: 2; }
+  .home-dashboard__right > .notice { order: 3; }
 }
 
 @media (prefers-reduced-motion: reduce) {

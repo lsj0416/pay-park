@@ -1,3 +1,22 @@
+.web-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.web-header__logo,
+.web-header__home {
+  color: var(--color-text-primary);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.web-header__logo { font-size: 1.125rem; }
+.web-header__home { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; }
+
 .screen-header {
   display: grid;
   gap: 8px;
@@ -69,6 +88,14 @@
 }
 
 .step-tabs::-webkit-scrollbar { display: none; }
+
+@media (min-width: 1440px) {
+  .step-tabs {
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
+  }
+}
 
 .step-tab {
   flex: 0 0 124px;

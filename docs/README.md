@@ -24,6 +24,7 @@
 | `03_FEATURE_SPEC.md` | 화면별 입력·출력·행동 명세 |
 | `04_TEST_AND_DEPLOY.md` | 테스트 기준과 Netlify 배포 |
 | `05_ORCHESTRATION_TASKS.md` | AI 병렬 작업 분담과 통합 순서 |
+| `06_RESPONSIVE_PLAN.md` | Tablet·Desktop 반응형 레이아웃 계획 |
 
 ## 우선순위
 

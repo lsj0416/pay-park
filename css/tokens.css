@@ -16,5 +16,12 @@
   --radius-pill: 999px;
   --shadow-card: 0 4px 8px rgb(0 0 0 / 8%);
   --space-page: 24px;
+  --content-max-tablet: 640px;
+  --content-max-desktop: 1200px;
+  --sidebar-width-desktop: 320px;
+  --content-col-desktop: 720px;
+  --desktop-grid-gap: 60px;
+  --desktop-wide-left: 560px;
+  --desktop-wide-right: 600px;
   font-family: "Noto Sans KR", Pretendard, "Apple SD Gothic Neo", system-ui, sans-serif;
 }
