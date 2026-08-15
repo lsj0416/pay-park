@@ -451,10 +451,20 @@ function renderHome(state) {
   setText('[data-output="home-remaining-days"]', `${daily.remainingDays}일`);
   setProgress(query('[data-output="home-progress"]'), percent);
   setText('[data-output="home-available-percent"]', `실수령액 중 ${percent}%를 자유롭게 쓸 수 있어요.`);
-  setText('[data-output="home-take-home"]', renderMoney(result.estimatedTakeHome));
-  setText('[data-output="home-fixed-expenses"]', renderMoney(result.fixedExpenses));
-  setText('[data-output="home-saving"]', renderMoney(result.savingCommitment));
-  setText('[data-output="home-calculated-available"]', renderMoney(result.availableAmount));
+  const detailRows = [
+    { label: "예상 실수령액", amount: result.estimatedTakeHome },
+    { label: "− 고정지출", amount: result.fixedExpenses },
+    { label: "− 저축·투자", amount: result.savingCommitment },
+  ];
+  if (plan) {
+    const planTotal = result.availableAmount - plan.remainingLiving;
+    detailRows.push({ label: "− AI 활용 계획", amount: planTotal });
+  }
+  state.purchases.forEach((item) => {
+    detailRows.push({ id: item.id, label: `− ${item.label || "결제"}`, amount: item.amount });
+  });
+  detailRows.push({ label: "= 가용 자금", amount: effectiveAvailable });
+  renderGoalList(query('[data-output="home-detail-list"]'), detailRows);
 
   setHidden('[data-home-plan]', !plan);
   if (plan) {
@@ -771,7 +781,7 @@ function applyAffordPayment() {
     const modal = query('[data-modal="afford-check"]');
     const item = {
       id: makeId("purchase"),
-      label: "",
+      label: lastParsedInput?.itemName ? String(lastParsedInput.itemName) : "",
       amount: pendingAffordAmount,
       createdAt: new Date().toISOString(),
     };
