@@ -87,7 +87,7 @@
               <dl class="goal-list" data-output="home-allocations"></dl>
             </div>
           </article>
-          <button class="link-card" type="button" data-action="open-ai-plan"><span><span class="link-card__title">이거 사도 될까?</span><span class="link-card__description">지금 가용 자금으로 소비 계획을 세워볼까요?</span></span><span class="link-card__arrow" aria-hidden="true">→</span></button>
+          <button class="link-card afford-entry-card" type="button" data-action="open-afford-check"><span><span class="link-card__title">✦ AI 소비 코치</span><span class="link-card__description">오늘 이거 사도 돼? 결제 전에 바로 물어보세요</span></span><span class="link-card__arrow" aria-hidden="true">→</span></button>
         </div>
         <div class="home-dashboard__right">
           <article class="content-card">
@@ -346,6 +346,91 @@
       </div>
     </section>
   </main>
+
+  <div class="modal-backdrop" data-modal="afford-check" hidden>
+    <div class="afford-modal" role="dialog" aria-modal="true" aria-labelledby="afford-modal-title">
+      <div class="afford-modal__handle" aria-hidden="true"></div>
+      <div class="afford-modal__header">
+        <h2 id="afford-modal-title" class="afford-modal__title">✦ AI 소비 코치</h2>
+        <button class="afford-modal__close" type="button" data-action="close-afford-check" aria-label="닫기">✕</button>
+      </div>
+      <div class="afford-modal__body">
+        <div class="afford-input-stage">
+          <div class="field-group">
+            <label class="field-label" for="coach-text">오늘 뭐 살까 고민되세요?</label>
+            <div class="text-field afford-coach-text-field">
+              <textarea id="coach-text" data-field="coach-text" rows="2" placeholder="오늘 치킨 25,000원 먹어도 될까?"></textarea>
+            </div>
+            <p class="field-help">예: "닌텐도 칩 60,000원 사도 될까?" · "맥북 2,000,000원 사도 될까?"</p>
+          </div>
+          <div class="chip-list" aria-label="AI 소비 코치 빠른 선택">
+            <button class="chip" type="button" data-action="select-coach-preset" data-value="오늘 치킨 25,000원 먹어도 될까?">치킨 25,000원</button>
+            <button class="chip" type="button" data-action="select-coach-preset" data-value="닌텐도 칩 60,000원 사도 될까?">닌텐도 칩 60,000원</button>
+            <button class="chip" type="button" data-action="select-coach-preset" data-value="맥북 2,000,000원 사도 될까?">맥북 200만원</button>
+          </div>
+          <p class="afford-parsed-item" data-output="afford-parsed-item"></p>
+          <div class="field-group">
+            <label class="field-label" for="afford-amount">결제 금액 (자동으로 채워져요, 확인 후 수정 가능)</label>
+            <div class="money-field">
+              <input id="afford-amount" type="text" inputmode="numeric" autocomplete="off" placeholder="0" data-field="afford-amount" />
+              <span class="money-field__unit">원</span>
+            </div>
+            <p class="field-error" data-error="afford-amount" role="alert" hidden>결제액을 올바르게 입력해주세요</p>
+          </div>
+          <p class="afford-coach-loading" data-output="afford-loading" role="status" hidden>AI가 확인하고 있어요…</p>
+          <button class="primary-button" type="button" data-action="submit-afford-check">AI로 확인하기</button>
+        </div>
+
+        <div class="afford-result afford-result--safe" data-status="safe" hidden>
+          <h3 class="afford-result__title">사도 돼요 👍</h3>
+          <dl class="afford-result__stats">
+            <div><dt>현재 하루 예산</dt><dd data-output="afford-safe-current-daily-budget">0원</dd></div>
+            <div><dt>결제 반영 후 하루 예산</dt><dd data-output="afford-safe-daily-budget">0원</dd></div>
+          </dl>
+          <div class="afford-coach-panel">
+            <h4 class="afford-coach-panel__title">✦ AI 코치</h4>
+            <p class="afford-result__message" data-output="afford-safe-explanation"></p>
+          </div>
+          <button class="primary-button" type="button" data-action="apply-afford-payment">결제하고 반영하기</button>
+        </div>
+
+        <div class="afford-result afford-result--caution" data-status="caution" hidden>
+          <h3 class="afford-result__title">조금 위험해요 ⚠️</h3>
+          <dl class="afford-result__stats">
+            <div><dt>현재 하루 예산</dt><dd data-output="afford-caution-current-daily-budget">0원</dd></div>
+            <div><dt>결제 후 줄어든 하루 예산</dt><dd data-output="afford-caution-daily-budget">0원</dd></div>
+            <div><dt>결제 후 이번 달 남는 돈</dt><dd data-output="afford-caution-remaining">0원</dd></div>
+          </dl>
+          <p class="afford-result__message" data-output="afford-caution-message"></p>
+          <div class="afford-coach-panel">
+            <h4 class="afford-coach-panel__title">✦ AI가 가능한 방법을 찾았어요</h4>
+            <div class="afford-coach-options" data-output="afford-caution-options"></div>
+          </div>
+          <button class="primary-button" type="button" data-action="apply-coach-plan" disabled>이 계획으로 반영하기</button>
+        </div>
+
+        <div class="afford-result afford-result--over" data-status="over-budget" hidden>
+          <h3 class="afford-result__title">예산 초과예요 ⛔</h3>
+          <dl class="afford-result__stats">
+            <div><dt>결제 후 이번 달 남는 돈</dt><dd data-output="afford-over-remaining">0원</dd></div>
+            <div><dt>현재 가용 자금</dt><dd data-output="afford-over-available">0원</dd></div>
+            <div><dt>초과 금액</dt><dd data-output="afford-over-excess">0원</dd></div>
+          </dl>
+          <p class="afford-result__message" data-output="afford-over-message"></p>
+          <div class="afford-coach-panel">
+            <h4 class="afford-coach-panel__title">✦ AI가 대안을 찾았어요</h4>
+            <div class="afford-coach-options" data-output="afford-over-options"></div>
+          </div>
+          <button class="secondary-button" type="button" data-action="cancel-afford-payment">결제하지 않기</button>
+        </div>
+
+        <div class="afford-coach-fallback" data-output="afford-coach-fallback" hidden>
+          <p data-output="afford-coach-fallback-message"></p>
+          <button class="secondary-button" type="button" data-action="retry-coach-advice">다시 시도</button>
+        </div>
+      </div>
+    </div>
+  </div>
   <script type="module" src="js/app.js"></script>
 </body>
 </html>

@@ -1,11 +1,16 @@
 // Task C owns this file: v2 application entry point and state/event wiring.
 
-import { calculateBudget, calculateDailyBudget } from "./calculator.js";
+import { calculateBudget, calculateDailyBudget, evaluatePurchase, sumPurchases } from "./calculator.js";
 import { buildPlan } from "./planner.js";
 import { products } from "./products.js";
+import { parseSpendingInput, getSpendingCoachAdvice } from "./spendingCoach.js";
 import { PAYDAY_PRESETS, SCREEN, initialState, loadState, patchState } from "./store.js";
 import {
+  closeModal,
   formatMoneyInput,
+  openModal,
+  renderCoachInfoCards,
+  renderCoachOptions,
   renderGoalChips,
   renderGoalList,
   renderItemRows,
@@ -28,6 +33,16 @@ function safeItems(items) {
     id: String(item?.id ?? `recovered-${index}`),
     label: String(item?.label ?? ""),
     amount: toWon(item?.amount),
+  }));
+}
+
+function safePurchaseItems(items) {
+  if (!Array.isArray(items)) return [];
+  return items.map((item, index) => ({
+    id: String(item?.id ?? `purchase-${index}`),
+    label: String(item?.label ?? ""),
+    amount: toWon(item?.amount),
+    createdAt: typeof item?.createdAt === "string" ? item.createdAt : new Date(0).toISOString(),
   }));
 }
 
@@ -61,6 +76,7 @@ function normalizeState(candidate) {
     },
     result,
     plan,
+    purchases: safePurchaseItems(state.purchases),
   };
 }
 
@@ -393,15 +409,19 @@ function renderHome(state) {
   const result = state.result;
   const daily = dailyFor(result.availableAmount, state);
   const plan = state.plan ? planWithDaily(state.plan, state) : null;
-  const effectiveAvailable = plan ? plan.remainingLiving : result.availableAmount;
+  const purchasesTotal = sumPurchases(state.purchases);
+  const effectiveAvailable = (plan ? plan.remainingLiving : result.availableAmount) - purchasesTotal;
+  const homeDailyBudget = purchasesTotal > 0
+    ? dailyFor(effectiveAvailable, state).dailyBudget
+    : (plan ? plan.adjustedDailyBudget : daily.dailyBudget);
   const percent = result.estimatedTakeHome > 0
     ? Math.min(100, Math.max(0, Math.round((effectiveAvailable / result.estimatedTakeHome) * 100)))
     : 0;
   setText('[data-output="home-period"]', periodText(state.period));
   setText('[data-output="home-available-amount"]', renderMoney(effectiveAvailable));
-  setText('[data-output="home-daily-budget"]', renderMoney(plan ? plan.adjustedDailyBudget : daily.dailyBudget));
+  setText('[data-output="home-daily-budget"]', renderMoney(homeDailyBudget));
   setText('[data-output="home-original-daily-budget"]', renderMoney(daily.dailyBudget));
-  setHidden('.mini-stat__before', !plan);
+  setHidden('.mini-stat__before', !plan && purchasesTotal <= 0);
   setText('[data-output="home-remaining-days"]', `${daily.remainingDays}일`);
   setProgress(query('[data-output="home-progress"]'), percent);
   setText('[data-output="home-available-percent"]', `실수령액 중 ${percent}%를 자유롭게 쓸 수 있어요.`);
@@ -415,6 +435,353 @@ function renderHome(state) {
     setText('[data-output="home-adjusted-daily-budget"]', renderMoney(plan.adjustedDailyBudget));
     renderGoalList(query('[data-output="home-allocations"]'), plan.goals, plan.remainingLiving);
   }
+}
+
+const AFFORD_STATUS_PANELS = ["safe", "caution", "over-budget"];
+const AFFORD_STATUS_KEY = { SAFE: "safe", CAUTION: "caution", OVER_BUDGET: "over-budget" };
+const AFFORD_DEFAULT_AMOUNT_ERROR = "결제액을 올바르게 입력해주세요";
+const AFFORD_NO_AMOUNT_FOUND_ERROR = "금액을 찾지 못했어요. 결제 금액을 직접 입력해주세요.";
+
+let pendingAffordAmount = null;
+let pendingCoachOption = null;
+let affordApplyInFlight = false;
+let coachDebounceTimer = null;
+let coachAmountUserEdited = false;
+let lastParsedInput = null;
+let currentAffordContext = null;
+let affordRequestToken = 0;
+
+function formatSignedMoney(value) {
+  const number = Math.trunc(Number(value) || 0);
+  return number < 0 ? `−${renderMoney(Math.abs(number))}` : renderMoney(number);
+}
+
+function availableFundsForAffordCheck(state = appState) {
+  const result = currentBudget(state);
+  const plan = state.plan ? planWithDaily(state.plan, state) : null;
+  return (plan ? plan.remainingLiving : result.availableAmount) - sumPurchases(state.purchases);
+}
+
+// AI가 제안한 commitAmount를 신뢰하지 않고, 없거나 비정상이면 검증된 결제액으로 대체한다.
+function sanitizeCoachOption(option, fallbackAmount) {
+  if (!option || typeof option !== "object") return null;
+  const title = String(option.title ?? "").trim();
+  if (!title) return null;
+  const rawCommit = Number(option.commitAmount);
+  const commitAmount = Number.isFinite(rawCommit) && rawCommit > 0
+    ? Math.round(rawCommit)
+    : Math.round(fallbackAmount);
+  return {
+    id: String(option.id ?? makeId("coach-option")),
+    title,
+    description: option.description ? String(option.description) : "",
+    commitAmount,
+  };
+}
+
+function setCoachControlsDisabled(modal, disabled) {
+  const submitButton = query('[data-action="submit-afford-check"]', modal);
+  if (submitButton) submitButton.disabled = disabled;
+  queryAll('[data-action="select-coach-preset"]', modal).forEach((button) => { button.disabled = disabled; });
+}
+
+function parsedInputAmount() {
+  const amount = Number(lastParsedInput?.amount);
+  return Number.isFinite(amount) && amount > 0 ? amount : null;
+}
+
+function applyCoachTextParse(text, modal) {
+  const parsed = parseSpendingInput(text ?? "");
+  lastParsedInput = parsed && typeof parsed === "object" ? parsed : null;
+  setText('[data-output="afford-parsed-item"]', lastParsedInput?.itemName ?? "", modal);
+
+  const parsedAmount = parsedInputAmount();
+  if (parsedAmount && !coachAmountUserEdited) {
+    const amountInput = query('[data-field="afford-amount"]', modal);
+    if (amountInput) amountInput.value = formatMoneyInput(parsedAmount);
+  }
+}
+
+function beginCoachRequest(modal) {
+  AFFORD_STATUS_PANELS.forEach((status) => setHidden(`[data-status="${status}"]`, true, modal));
+  setHidden('[data-output="afford-coach-fallback"]', true, modal);
+  setHidden('[data-output="afford-loading"]', false, modal);
+  setCoachControlsDisabled(modal, true);
+}
+
+function requestCoachAdvice(modal) {
+  const context = currentAffordContext;
+  if (!context) return;
+  const token = ++affordRequestToken;
+
+  getSpendingCoachAdvice({
+    status: context.evaluation.status,
+    paymentAmount: context.paymentAmount,
+    evaluation: context.evaluation,
+    dailyBudget: context.dailyBudget,
+    remainingDays: context.remainingDays,
+    parsedInput: context.parsedInput,
+  }).then((advice) => {
+    if (token !== affordRequestToken) return;
+    handleCoachAdviceSuccess(modal, context, advice);
+  }).catch(() => {
+    if (token !== affordRequestToken) return;
+    handleCoachAdviceFailure(modal, context);
+  });
+}
+
+function handleCoachAdviceSuccess(modal, context, advice) {
+  setHidden('[data-output="afford-loading"]', true, modal);
+  setHidden('[data-output="afford-coach-fallback"]', true, modal);
+  setCoachControlsDisabled(modal, false);
+
+  const { evaluation, paymentAmount, availableFunds, dailyBudget } = context;
+  const statusKey = AFFORD_STATUS_KEY[evaluation.status];
+  if (!statusKey) return;
+  setHidden(`[data-status="${statusKey}"]`, false, modal);
+  const explanation = typeof advice?.explanation === "string" ? advice.explanation.trim() : "";
+
+  if (statusKey === "safe") {
+    setText('[data-output="afford-safe-daily-budget"]', renderMoney(evaluation.adjustedDailyBudget), modal);
+    setText('[data-output="afford-safe-current-daily-budget"]', renderMoney(dailyBudget), modal);
+    setText('[data-output="afford-safe-explanation"]', explanation, modal);
+    pendingAffordAmount = paymentAmount;
+  } else if (statusKey === "caution") {
+    setText('[data-output="afford-caution-daily-budget"]', renderMoney(evaluation.adjustedDailyBudget), modal);
+    setText('[data-output="afford-caution-current-daily-budget"]', renderMoney(dailyBudget), modal);
+    setText('[data-output="afford-caution-remaining"]', formatSignedMoney(evaluation.remainingAfterPayment), modal);
+    setText(
+      '[data-output="afford-caution-message"]',
+      explanation
+        || `다음 ${evaluation.absorptionDays}일 하루 ${formatMoneyInput(evaluation.savingPerDay)}원씩 아끼면 나눠서 흡수돼요.`,
+      modal,
+    );
+    const recommendedOption = sanitizeCoachOption(advice?.recommendedOption, paymentAmount);
+    const alternatives = Array.isArray(advice?.alternatives)
+      ? advice.alternatives.map((option) => sanitizeCoachOption(option, paymentAmount)).filter(Boolean)
+      : [];
+    renderCoachOptions(query('[data-output="afford-caution-options"]', modal), { recommendedOption, alternatives });
+    const applyPlanButton = query('[data-action="apply-coach-plan"]', modal);
+    if (applyPlanButton) applyPlanButton.disabled = true;
+    pendingAffordAmount = paymentAmount;
+  } else if (statusKey === "over-budget") {
+    const overAmount = evaluation.overAmount ?? Math.max(0, paymentAmount - availableFunds);
+    setText('[data-output="afford-over-remaining"]', formatSignedMoney(evaluation.remainingAfterPayment), modal);
+    setText('[data-output="afford-over-available"]', renderMoney(availableFunds), modal);
+    setText('[data-output="afford-over-excess"]', renderMoney(overAmount), modal);
+    setText(
+      '[data-output="afford-over-message"]',
+      explanation || `이번 달 가용 자금보다 결제액이 ${renderMoney(overAmount)} 커요. 이 결제는 추천하지 않아요.`,
+      modal,
+    );
+    const recommendedOption = sanitizeCoachOption(advice?.recommendedOption, paymentAmount);
+    const alternatives = Array.isArray(advice?.alternatives)
+      ? advice.alternatives.map((option) => sanitizeCoachOption(option, paymentAmount)).filter(Boolean)
+      : [];
+    renderCoachInfoCards(query('[data-output="afford-over-options"]', modal), { recommendedOption, alternatives });
+  }
+}
+
+function handleCoachAdviceFailure(modal, context) {
+  setHidden('[data-output="afford-loading"]', true, modal);
+  setCoachControlsDisabled(modal, false);
+  pendingCoachOption = null;
+
+  const { evaluation, paymentAmount, availableFunds, dailyBudget } = context;
+  const statusKey = AFFORD_STATUS_KEY[evaluation.status];
+  if (!statusKey) return;
+  setHidden(`[data-status="${statusKey}"]`, false, modal);
+  setHidden('[data-output="afford-coach-fallback"]', false, modal);
+  setText(
+    '[data-output="afford-coach-fallback-message"]',
+    "예산 계산은 완료했지만 AI 제안을 불러오지 못했어요. 기본 조정안을 확인하거나 다시 시도해 주세요.",
+    modal,
+  );
+
+  if (statusKey === "safe") {
+    setText('[data-output="afford-safe-daily-budget"]', renderMoney(evaluation.adjustedDailyBudget), modal);
+    setText('[data-output="afford-safe-current-daily-budget"]', renderMoney(dailyBudget), modal);
+    setText('[data-output="afford-safe-explanation"]', "", modal);
+    pendingAffordAmount = paymentAmount;
+  } else if (statusKey === "caution") {
+    setText('[data-output="afford-caution-daily-budget"]', renderMoney(evaluation.adjustedDailyBudget), modal);
+    setText('[data-output="afford-caution-current-daily-budget"]', renderMoney(dailyBudget), modal);
+    setText('[data-output="afford-caution-remaining"]', formatSignedMoney(evaluation.remainingAfterPayment), modal);
+    setText(
+      '[data-output="afford-caution-message"]',
+      `다음 ${evaluation.absorptionDays}일 하루 ${formatMoneyInput(evaluation.savingPerDay)}원씩 아끼면 나눠서 흡수돼요.`,
+      modal,
+    );
+    query('[data-output="afford-caution-options"]', modal)?.replaceChildren();
+    const applyPlanButton = query('[data-action="apply-coach-plan"]', modal);
+    if (applyPlanButton) applyPlanButton.disabled = true;
+    pendingAffordAmount = paymentAmount;
+  } else if (statusKey === "over-budget") {
+    const overAmount = evaluation.overAmount ?? Math.max(0, paymentAmount - availableFunds);
+    setText('[data-output="afford-over-remaining"]', formatSignedMoney(evaluation.remainingAfterPayment), modal);
+    setText('[data-output="afford-over-available"]', renderMoney(availableFunds), modal);
+    setText('[data-output="afford-over-excess"]', renderMoney(overAmount), modal);
+    setText(
+      '[data-output="afford-over-message"]',
+      `이번 달 가용 자금보다 결제액이 ${renderMoney(overAmount)} 커요. 이 결제는 추천하지 않아요.`,
+      modal,
+    );
+    query('[data-output="afford-over-options"]', modal)?.replaceChildren();
+  }
+}
+
+function resetAffordCheck(modal) {
+  pendingAffordAmount = null;
+  pendingCoachOption = null;
+  lastParsedInput = null;
+  coachAmountUserEdited = false;
+  currentAffordContext = null;
+  affordRequestToken += 1;
+  clearTimeout(coachDebounceTimer);
+
+  const amountInput = query('[data-field="afford-amount"]', modal);
+  if (amountInput) amountInput.value = "";
+  const coachText = query('[data-field="coach-text"]', modal);
+  if (coachText) coachText.value = "";
+  setText('[data-output="afford-parsed-item"]', "", modal);
+  setHidden('[data-error="afford-amount"]', true, modal);
+  setHidden('[data-output="afford-loading"]', true, modal);
+  setHidden('[data-output="afford-coach-fallback"]', true, modal);
+  AFFORD_STATUS_PANELS.forEach((status) => setHidden(`[data-status="${status}"]`, true, modal));
+  query('[data-output="afford-caution-options"]', modal)?.replaceChildren();
+  query('[data-output="afford-over-options"]', modal)?.replaceChildren();
+  const applyPlanButton = query('[data-action="apply-coach-plan"]', modal);
+  if (applyPlanButton) applyPlanButton.disabled = true;
+  setCoachControlsDisabled(modal, false);
+}
+
+function openAffordCheck(triggerEl) {
+  const modal = query('[data-modal="afford-check"]');
+  if (!modal) return;
+  resetAffordCheck(modal);
+  openModal(modal, {
+    focusEl: query('[data-field="afford-amount"]', modal),
+    returnFocusEl: triggerEl,
+  });
+}
+
+function closeAffordCheck() {
+  const modal = query('[data-modal="afford-check"]');
+  if (!modal) return;
+  closeModal(modal);
+}
+
+function submitAffordCheck() {
+  const modal = query('[data-modal="afford-check"]');
+  if (!modal) return;
+  const input = query('[data-field="afford-amount"]', modal);
+  const paymentAmount = toWon(input?.value);
+  const valid = paymentAmount > 0;
+
+  if (!valid) {
+    const hasParsedAmount = Boolean(parsedInputAmount());
+    setText(
+      '[data-error="afford-amount"]',
+      hasParsedAmount ? AFFORD_DEFAULT_AMOUNT_ERROR : AFFORD_NO_AMOUNT_FOUND_ERROR,
+      modal,
+    );
+    setHidden('[data-error="afford-amount"]', false, modal);
+    input?.focus();
+    return;
+  }
+
+  setHidden('[data-error="afford-amount"]', true, modal);
+  pendingAffordAmount = null;
+  pendingCoachOption = null;
+  beginCoachRequest(modal);
+
+  const availableFunds = availableFundsForAffordCheck(appState);
+  const daily = dailyFor(availableFunds, appState);
+  const evaluation = evaluatePurchase({
+    paymentAmount,
+    availableFunds,
+    dailyBudget: daily.dailyBudget,
+    remainingDays: daily.remainingDays,
+  });
+
+  if (!evaluation) {
+    setHidden('[data-output="afford-loading"]', true, modal);
+    setCoachControlsDisabled(modal, false);
+    return;
+  }
+
+  currentAffordContext = {
+    paymentAmount,
+    evaluation,
+    availableFunds,
+    dailyBudget: daily.dailyBudget,
+    remainingDays: daily.remainingDays,
+    parsedInput: lastParsedInput,
+  };
+
+  requestCoachAdvice(modal);
+}
+
+function selectCoachOption(button) {
+  const modal = button.closest('[data-modal="afford-check"]') ?? query('[data-modal="afford-check"]');
+  queryAll('[data-action="select-coach-option"]', modal).forEach((btn) => {
+    btn.setAttribute("aria-pressed", String(btn === button));
+  });
+  const commitAmount = toWon(button.dataset.commitAmount);
+  pendingCoachOption = {
+    id: button.dataset.optionId ?? "",
+    title: button.dataset.optionTitle ?? "",
+    commitAmount,
+  };
+  const applyPlanButton = query('[data-action="apply-coach-plan"]', modal);
+  if (applyPlanButton) applyPlanButton.disabled = !commitAmount;
+}
+
+function applyAffordPayment() {
+  if (affordApplyInFlight) return;
+  if (!pendingAffordAmount) return;
+  affordApplyInFlight = true;
+  try {
+    const modal = query('[data-modal="afford-check"]');
+    const item = {
+      id: makeId("purchase"),
+      label: "",
+      amount: pendingAffordAmount,
+      createdAt: new Date().toISOString(),
+    };
+    updateState({ purchases: [...appState.purchases, item] });
+    render(appState);
+    closeAffordCheck();
+    resetAffordCheck(modal);
+  } finally {
+    affordApplyInFlight = false;
+  }
+}
+
+function applyCoachPlan() {
+  if (affordApplyInFlight) return;
+  if (!pendingCoachOption) return;
+  affordApplyInFlight = true;
+  try {
+    const modal = query('[data-modal="afford-check"]');
+    const item = {
+      id: makeId("purchase"),
+      label: lastParsedInput?.itemName ? String(lastParsedInput.itemName) : "",
+      amount: pendingCoachOption.commitAmount,
+      createdAt: new Date().toISOString(),
+    };
+    updateState({ purchases: [...appState.purchases, item] });
+    render(appState);
+    closeAffordCheck();
+    resetAffordCheck(modal);
+  } finally {
+    affordApplyInFlight = false;
+  }
+}
+
+function cancelAffordPayment() {
+  pendingAffordAmount = null;
+  closeAffordCheck();
 }
 
 export function navigate(screenId) {
@@ -470,6 +837,11 @@ function removeItem(kind, row) {
 }
 
 document.addEventListener("click", (event) => {
+  if (event.target instanceof Element && event.target.matches('[data-modal="afford-check"]')) {
+    closeAffordCheck();
+    return;
+  }
+
   const control = event.target.closest('[data-action]');
   if (!control || control.disabled) return;
   const action = control.dataset.action;
@@ -490,6 +862,29 @@ document.addEventListener("click", (event) => {
     case "start-calculation": navigate(resumeScreen()); break;
     case "restart-calculation": navigate(SCREEN.PERIOD); break;
     case "go-home": navigate(SCREEN.HOME); break;
+    case "open-afford-check": openAffordCheck(control); break;
+    case "close-afford-check": closeAffordCheck(); break;
+    case "submit-afford-check": submitAffordCheck(); break;
+    case "apply-afford-payment": applyAffordPayment(); break;
+    case "cancel-afford-payment": cancelAffordPayment(); break;
+    case "select-coach-preset": {
+      const modal = control.closest('[data-modal="afford-check"]') ?? query('[data-modal="afford-check"]');
+      const textarea = query('[data-field="coach-text"]', modal);
+      const value = control.dataset.value ?? "";
+      if (textarea) textarea.value = value;
+      clearTimeout(coachDebounceTimer);
+      applyCoachTextParse(value, modal);
+      break;
+    }
+    case "select-coach-option": selectCoachOption(control); break;
+    case "apply-coach-plan": applyCoachPlan(); break;
+    case "retry-coach-advice": {
+      const modal = control.closest('[data-modal="afford-check"]') ?? query('[data-modal="afford-check"]');
+      if (!currentAffordContext) break;
+      beginCoachRequest(modal);
+      requestCoachAdvice(modal);
+      break;
+    }
     case "open-ai-plan":
       planReturnScreen = appState.currentScreen;
       draftPlan = appState.plan;
@@ -580,6 +975,13 @@ document.addEventListener("submit", (event) => {
   }
 });
 
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter") return;
+  if (!(event.target instanceof Element) || !event.target.matches('[data-field="afford-amount"]')) return;
+  event.preventDefault();
+  submitAffordCheck();
+});
+
 document.addEventListener("input", (event) => {
   const field = event.target.dataset.field;
   if (!field) return;
@@ -591,6 +993,19 @@ document.addEventListener("input", (event) => {
     updateState({ income: { ...appState.income, [key]: value }, ...invalidateResult() });
     renderIncome(appState);
     renderStepSummaries(appState);
+    return;
+  }
+
+  if (field === "afford-amount") {
+    coachAmountUserEdited = true;
+    return;
+  }
+
+  if (field === "coach-text") {
+    const modal = event.target.closest('[data-modal="afford-check"]') ?? query('[data-modal="afford-check"]');
+    const text = event.target.value;
+    clearTimeout(coachDebounceTimer);
+    coachDebounceTimer = setTimeout(() => applyCoachTextParse(text, modal), 400);
     return;
   }
 
@@ -630,7 +1045,7 @@ document.addEventListener("input", (event) => {
 
 document.addEventListener("blur", (event) => {
   const field = event.target.dataset.field;
-  if (!["gross-salary", "fixed-expense-amount", "saving-amount"].includes(field)) return;
+  if (!["gross-salary", "fixed-expense-amount", "saving-amount", "afford-amount"].includes(field)) return;
   event.target.value = formatMoneyInput(toWon(event.target.value));
 }, true);
 

@@ -115,6 +115,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   .sample-result-card__metrics { grid-template-columns: repeat(3, 1fr); }
   .sample-result-card__metric--extra { display: grid; }
   .screen[data-screen="home"] [data-home-view="empty"] .sticky-actions { grid-auto-flow: column; grid-template-columns: 1fr 1fr; }
+
+  .modal-backdrop { align-items: center; padding: 24px; }
+  .afford-modal { max-width: 420px; max-height: 85vh; max-height: 85dvh; border-radius: var(--radius-card-lg); box-shadow: 0 16px 40px rgb(0 0 0 / 18%); }
+  .afford-modal__handle { display: none; }
 }
 
 /* Desktop layout temporarily disabled — remove this comment wrapper to re-enable.

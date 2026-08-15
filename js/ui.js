@@ -188,10 +188,147 @@ export function renderProductCards(container, productItems = []) {
   container.replaceChildren(fragment);
 }
 
+export function renderCoachOptions(container, { recommendedOption, alternatives = [] } = {}) {
+  if (!container) return;
+  const fragment = document.createDocumentFragment();
+  const options = [recommendedOption, ...alternatives].filter(Boolean);
+
+  options.forEach((option, index) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = index === 0 ? "coach-option coach-option--recommended" : "coach-option";
+    button.dataset.action = "select-coach-option";
+    button.dataset.optionId = String(option.id ?? "");
+    button.dataset.commitAmount = String(option.commitAmount ?? "");
+    button.dataset.optionTitle = String(option.title ?? "");
+    button.setAttribute("aria-pressed", "false");
+
+    const title = document.createElement("span");
+    title.className = "coach-option__title";
+    title.textContent = option.title ?? "";
+    button.append(title);
+
+    if (option.description) {
+      const description = document.createElement("span");
+      description.className = "coach-option__description";
+      description.textContent = option.description;
+      button.append(description);
+    }
+
+    fragment.append(button);
+  });
+
+  container.replaceChildren(fragment);
+}
+
+export function renderCoachInfoCards(container, { recommendedOption, alternatives = [] } = {}) {
+  if (!container) return;
+  const fragment = document.createDocumentFragment();
+  const options = [recommendedOption, ...alternatives].filter(Boolean);
+
+  options.forEach((option, index) => {
+    const card = document.createElement("div");
+    card.className = index === 0 ? "coach-info-card coach-info-card--recommended" : "coach-info-card";
+
+    const title = document.createElement("p");
+    title.className = "coach-info-card__title";
+    title.textContent = option.title ?? "";
+    card.append(title);
+
+    if (option.description) {
+      const description = document.createElement("p");
+      description.className = "coach-info-card__description";
+      description.textContent = option.description;
+      card.append(description);
+    }
+
+    fragment.append(card);
+  });
+
+  container.replaceChildren(fragment);
+}
+
 export function setProgress(element, percent) {
   if (!element) return;
   const safePercent = Math.min(100, Math.max(0, Math.round(Number(percent) || 0)));
   element.setAttribute("aria-valuenow", String(safePercent));
   const bar = element.querySelector(".progress__bar");
   if (bar) bar.style.width = `${safePercent}%`;
+}
+
+const FOCUSABLE_SELECTOR = [
+  "a[href]",
+  "button:not([disabled])",
+  "textarea:not([disabled])",
+  "input:not([disabled])",
+  "select:not([disabled])",
+  '[tabindex]:not([tabindex="-1"])',
+].join(",");
+
+function getFocusable(container) {
+  return [...container.querySelectorAll(FOCUSABLE_SELECTOR)].filter(
+    (element) => element.offsetParent !== null || element === document.activeElement,
+  );
+}
+
+let activeModal = null;
+
+function handleModalKeydown(event) {
+  if (!activeModal) return;
+  if (event.key === "Escape") {
+    event.preventDefault();
+    closeModal(activeModal.modalEl);
+    return;
+  }
+  if (event.key !== "Tab") return;
+
+  const focusable = getFocusable(activeModal.modalEl);
+  if (!focusable.length) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+}
+
+// Locks body scroll and traps Tab/Escape inside modalEl until closeModal() is called.
+export function openModal(modalEl, { focusEl, returnFocusEl, onClose } = {}) {
+  if (!modalEl) return;
+  if (activeModal?.modalEl === modalEl) return;
+  if (activeModal) closeModal(activeModal.modalEl);
+
+  const previousFocus = returnFocusEl instanceof HTMLElement
+    ? returnFocusEl
+    : (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+
+  modalEl.hidden = false;
+  document.body.style.overflow = "hidden";
+  document.addEventListener("keydown", handleModalKeydown, true);
+  activeModal = { modalEl, previousFocus, onClose };
+
+  const target = focusEl && modalEl.contains(focusEl) ? focusEl : getFocusable(modalEl)[0];
+  target?.focus();
+}
+
+export function closeModal(modalEl) {
+  if (!modalEl) return;
+  if (!activeModal || activeModal.modalEl !== modalEl) {
+    modalEl.hidden = true;
+    return;
+  }
+  const { previousFocus, onClose } = activeModal;
+  document.removeEventListener("keydown", handleModalKeydown, true);
+  modalEl.hidden = true;
+  document.body.style.overflow = "";
+  activeModal = null;
+  onClose?.();
+  previousFocus?.focus?.();
+}
+
+export function isModalOpen(modalEl) {
+  return Boolean(activeModal && activeModal.modalEl === modalEl);
 }

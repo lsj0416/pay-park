@@ -31,6 +31,7 @@ export const initialState = {
     ],
     savingItems: [{ id: "saving-installment", label: "적금", amount: 500000 }],
   },
+  purchases: [], // [{ id, amount, label?, createdAt }]
   result: null,
   plan: null,
   updatedAt: null,
@@ -46,6 +47,7 @@ const createInitialState = () => ({
     fixedExpenseItems: initialState.deductions.fixedExpenseItems.map((item) => ({ ...item })),
     savingItems: initialState.deductions.savingItems.map((item) => ({ ...item })),
   },
+  purchases: initialState.purchases.map((item) => ({ ...item })),
 });
 
 export function loadState() {
