@@ -2,16 +2,6 @@
 
 export const products = [
   {
-    id: "todak-parking",
-    name: "토닥 파킹통장",
-    bankName: "토닥은행",
-    type: "자유입출금",
-    term: null,
-    rate: 0.031,
-    instantWithdraw: true,
-    note: "중도 출금 가능",
-  },
-  {
     id: "saerok-short-term",
     name: "6개월 단기적금",
     bankName: "새록저축은행",
@@ -28,5 +18,15 @@ export const products = [
     term: "12개월",
     rate: 0.04,
     instantWithdraw: false,
+  },
+  {
+    id: "todak-parking",
+    name: "토닥 파킹통장",
+    bankName: "토닥은행",
+    type: "자유입출금",
+    term: null,
+    rate: 0.031,
+    instantWithdraw: true,
+    note: "중도 출금 가능",
   },
 ];

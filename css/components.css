@@ -238,6 +238,53 @@
 .summary-card__value { margin: 0; color: var(--color-text-primary); font-size: clamp(1.5rem, 7vw, 2rem); font-weight: 800; letter-spacing: -0.04em; overflow-wrap: anywhere; }
 .summary-card__description { margin: 7px 0 0; color: var(--color-text-secondary); font-size: 0.8125rem; line-height: 1.5; }
 
+.breakdown-bar {
+  display: flex;
+  height: 16px;
+  overflow: hidden;
+  gap: 2px;
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-canvas);
+}
+
+.breakdown-bar__segment { min-width: 2px; height: 100%; }
+.breakdown-bar__segment--fixed { background: var(--color-text-warning); }
+.breakdown-bar__segment--saving { background: var(--color-success); }
+.breakdown-bar__segment--available { background: var(--color-bg-brand); }
+
+.breakdown-legend {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.breakdown-legend__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-secondary);
+  font-size: .8125rem;
+}
+
+.breakdown-legend__item strong {
+  margin-left: auto;
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+.breakdown-legend__dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+
+.breakdown-legend__item--fixed .breakdown-legend__dot { background: var(--color-text-warning); }
+.breakdown-legend__item--saving .breakdown-legend__dot { background: var(--color-success); }
+.breakdown-legend__item--available .breakdown-legend__dot { background: var(--color-bg-brand); }
+
 .hero-card {
   padding: 24px 20px;
   border-color: transparent;

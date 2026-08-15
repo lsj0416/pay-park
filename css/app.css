@@ -48,7 +48,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 
 .applied-result-layout__left,
 .applied-result-layout__right { display: grid; gap: 20px; min-width: 0; }
-.product-list { display: grid; gap: 10px; }
+.product-list { display: grid; gap: 14px; margin: 8px 0; }
 .product-note { margin: 0; color: var(--color-text-secondary); font-size: .75rem; line-height: 1.5; }
 
 .mini-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; margin-top: 20px; overflow: hidden; border-radius: 10px; background: rgb(255 255 255 / 24%); }

@@ -299,6 +299,22 @@ function renderResult(state) {
     '[data-output="result-formula-summary"]',
     `실수령 ${formatMoneyInput(result.estimatedTakeHome)} − 고정비 ${formatMoneyInput(result.fixedExpenses)} − 저축 ${formatMoneyInput(result.savingCommitment)}`,
   );
+
+  const total = Math.max(1, result.estimatedTakeHome);
+  const fixedPercent = (result.fixedExpenses / total) * 100;
+  const savingPercent = (result.savingCommitment / total) * 100;
+  const availablePercent = (result.availableAmount / total) * 100;
+
+  const fixedBar = query('[data-output="breakdown-fixed-bar"]');
+  if (fixedBar) fixedBar.style.width = `${fixedPercent}%`;
+  const savingBar = query('[data-output="breakdown-saving-bar"]');
+  if (savingBar) savingBar.style.width = `${savingPercent}%`;
+  const availableBar = query('[data-output="breakdown-available-bar"]');
+  if (availableBar) availableBar.style.width = `${availablePercent}%`;
+
+  setText('[data-output="breakdown-fixed-value"]', `−${renderMoney(result.fixedExpenses)}`);
+  setText('[data-output="breakdown-saving-value"]', `−${renderMoney(result.savingCommitment)}`);
+  setText('[data-output="breakdown-available-value"]', renderMoney(result.availableAmount));
   setHidden('[data-warning="zero-available"]', result.availableAmount !== 0);
 }
 

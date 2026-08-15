@@ -242,7 +242,17 @@
         </article>
         <article class="content-card">
           <h3 class="card-title">계산 근거</h3>
-          <p class="card-value-line" data-output="result-formula-summary">0원</p>
+          <div class="breakdown-bar" role="img" aria-label="실수령액 중 고정비, 저축, 가용 자금 비율">
+            <span class="breakdown-bar__segment breakdown-bar__segment--fixed" data-output="breakdown-fixed-bar" style="width:0%"></span>
+            <span class="breakdown-bar__segment breakdown-bar__segment--saving" data-output="breakdown-saving-bar" style="width:0%"></span>
+            <span class="breakdown-bar__segment breakdown-bar__segment--available" data-output="breakdown-available-bar" style="width:0%"></span>
+          </div>
+          <ul class="breakdown-legend">
+            <li class="breakdown-legend__item breakdown-legend__item--fixed"><span class="breakdown-legend__dot"></span>고정비<strong data-output="breakdown-fixed-value">0원</strong></li>
+            <li class="breakdown-legend__item breakdown-legend__item--saving"><span class="breakdown-legend__dot"></span>저축<strong data-output="breakdown-saving-value">0원</strong></li>
+            <li class="breakdown-legend__item breakdown-legend__item--available"><span class="breakdown-legend__dot"></span>가용 자금<strong data-output="breakdown-available-value">0원</strong></li>
+          </ul>
+          <p class="sr-only" data-output="result-formula-summary">0원</p>
         </article>
         <button class="link-card afford-entry-card" type="button" data-action="open-ai-plan"><span><span class="link-card__title">✦ AI와 활용 계획 세우기</span><span class="link-card__description">남은 돈을 목표에 맞게 나눠볼까요?</span></span><span class="link-card__arrow" aria-hidden="true">→</span></button>
         <aside class="notice"><p>가용 자금은 입력값을 기반으로 한 참고용 추정치예요.</p></aside>
