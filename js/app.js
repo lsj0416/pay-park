@@ -11,7 +11,6 @@ import {
   openModal,
   renderCoachInfoCards,
   renderCoachOptions,
-  renderGoalChips,
   renderGoalList,
   renderItemRows,
   renderMoney,
@@ -292,12 +291,14 @@ function renderResult(state) {
   const result = currentBudget(state);
   const daily = dailyFor(result.availableAmount, state);
   setText('[data-output="available-amount"]', renderMoney(result.availableAmount));
-  setText('[data-output="daily-budget"]', renderMoney(daily.dailyBudget));
-  setText('[data-output="remaining-days"]', daily.remainingDays);
-  setText('[data-output="result-take-home"]', `+ ${renderMoney(result.estimatedTakeHome)}`);
-  setText('[data-output="result-fixed-expenses"]', `− ${renderMoney(result.fixedExpenses)}`);
-  setText('[data-output="result-saving"]', `− ${renderMoney(result.savingCommitment)}`);
-  setText('[data-output="result-available"]', renderMoney(result.availableAmount));
+  setText(
+    '[data-output="result-daily-summary"]',
+    `${renderMoney(daily.dailyBudget)} · ${daily.remainingDays}일 기준`,
+  );
+  setText(
+    '[data-output="result-formula-summary"]',
+    `실수령 ${formatMoneyInput(result.estimatedTakeHome)} − 고정비 ${formatMoneyInput(result.fixedExpenses)} − 저축 ${formatMoneyInput(result.savingCommitment)}`,
+  );
   setHidden('[data-warning="zero-available"]', result.availableAmount !== 0);
 }
 
@@ -332,6 +333,11 @@ function renderPlan(state) {
   const result = currentBudget(state);
   const daily = dailyFor(result.availableAmount, state);
   setText('[data-output="original-daily-budget"]', renderMoney(daily.dailyBudget));
+  setText('[data-output="ai-plan-available"]', renderMoney(result.availableAmount));
+  setText(
+    '[data-output="ai-plan-current-daily"]',
+    `현재 하루 예산 ${renderMoney(daily.dailyBudget)} · ${daily.remainingDays}일`,
+  );
 
   const textarea = query('[data-field="goal-text"]');
   const plan = planWithDaily(draftPlan ?? state.plan, state);
@@ -340,18 +346,10 @@ function renderPlan(state) {
   const applyButton = query('[data-action="apply-plan"]');
   if (applyButton) applyButton.disabled = !plan;
 
-  const hasParsedGoals = Boolean(plan && !(plan.goals.length === 1 && plan.goals[0].id === "goal"));
-  setHidden('[data-output="parsed-chips"]', !hasParsedGoals);
-  renderGoalChips(query('[data-output="parsed-chips"]'), hasParsedGoals ? plan.goals : []);
-  setText(
-    '[data-output="plan-input-caption"]',
-    hasParsedGoals ? "AI가 금액과 목적을 자동으로 나눴어요" : "여행, 비상금처럼 목적과 금액을 적어보세요",
-  );
-
   if (!plan) {
     setText('[data-output="adjusted-daily-budget"]', "—");
-    setText('[data-output="budget-decrease"]', "0원");
     setText('[data-output="monthly-goal-total"]', renderMoney(0));
+    renderGoalList(query('[data-output="ai-plan-allocations"]'), []);
     renderProductCards(query('[data-output="product-list"]'), orderedProducts(null));
     const toggle = query('[data-field="instant-withdraw"]');
     if (toggle) toggle.checked = instantWithdrawFirst;
@@ -359,12 +357,24 @@ function renderPlan(state) {
   }
 
   setText('[data-output="adjusted-daily-budget"]', renderMoney(plan.adjustedDailyBudget));
-  setText('[data-output="budget-decrease"]', renderMoney(Math.max(0, daily.dailyBudget - plan.adjustedDailyBudget)));
   const goalTotal = plan.goals.reduce((sum, goal) => sum + toWon(goal.amount), 0);
   setText('[data-output="monthly-goal-total"]', renderMoney(goalTotal));
+  renderGoalList(query('[data-output="ai-plan-allocations"]'), plan.goals, plan.remainingLiving);
   renderProductCards(query('[data-output="product-list"]'), orderedProducts(plan));
   const toggle = query('[data-field="instant-withdraw"]');
   if (toggle) toggle.checked = instantWithdrawFirst;
+}
+
+function applyGoalText(text) {
+  const goalText = String(text ?? "").trim();
+  const hadPlan = Boolean(draftPlan);
+  draftPlan = goalText
+    ? planWithDaily(buildPlan(goalText, currentBudget(appState).availableAmount), appState)
+    : null;
+  renderPlan(appState);
+  if (!hadPlan && draftPlan) {
+    query('[data-output="ai-plan-allocations"]')?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
+  }
 }
 
 function renderAppliedResult(state) {
@@ -927,6 +937,19 @@ document.addEventListener("click", (event) => {
       navigate(SCREEN.AI_RESULT);
       break;
     }
+    case "submit-plan": {
+      clearTimeout(goalDebounceTimer);
+      applyGoalText(query('[data-field="goal-text"]')?.value ?? "");
+      break;
+    }
+    case "fill-plan-example": {
+      const textarea = query('[data-field="goal-text"]');
+      if (!textarea) break;
+      clearTimeout(goalDebounceTimer);
+      textarea.value = textarea.placeholder ?? "";
+      applyGoalText(textarea.value);
+      break;
+    }
     case "toggle-instant-withdraw":
       instantWithdrawFirst = Boolean(control.checked);
       renderProductCards(query('[data-output="product-list"]'), orderedProducts(draftPlan ?? appState.plan));
@@ -1010,18 +1033,9 @@ document.addEventListener("input", (event) => {
   }
 
   if (field === "goal-text") {
-    const goalText = event.target.value.trim();
+    const goalText = event.target.value;
     clearTimeout(goalDebounceTimer);
-    goalDebounceTimer = setTimeout(() => {
-      const hadPlan = Boolean(draftPlan);
-      draftPlan = goalText
-        ? planWithDaily(buildPlan(goalText, currentBudget(appState).availableAmount), appState)
-        : null;
-      renderPlan(appState);
-      if (!hadPlan && draftPlan) {
-        query('.simulator-impact')?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
-      }
-    }, 400);
+    goalDebounceTimer = setTimeout(() => applyGoalText(goalText), 400);
     return;
   }
 

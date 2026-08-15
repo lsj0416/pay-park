@@ -220,9 +220,7 @@
     <section class="screen" data-screen="result" aria-labelledby="result-title" hidden>
       <header class="screen-header">
         <div class="screen-header__top"><button class="back-button" type="button" data-action="go-deductions" aria-label="고정비와 저축으로 돌아가기">←</button></div>
-        <p class="screen-header__eyebrow">계산이 끝났어요</p>
-        <h2 id="result-title">이번 달, 진짜 쓸 수 있는 돈</h2>
-        <p>월급에서 빠져나갈 돈과 남은 하루 예산을 한눈에 확인해보세요.</p>
+        <h2 id="result-title">가용 자금 결과</h2>
       </header>
       <nav class="step-tabs" aria-label="가용 자금 계산 단계">
         <button class="step-tab" type="button" data-action="go-period" data-complete="true"><span class="step-tab__title">✓ 예산 기간</span><span class="step-tab__status" data-output="step-period-summary">8/10~</span></button>
@@ -230,77 +228,81 @@
         <button class="step-tab" type="button" data-action="go-deductions" data-complete="true"><span class="step-tab__title">✓ 고정비·저축</span><span class="step-tab__status" data-output="step-deductions-summary">총 127만</span></button>
         <button class="step-tab" type="button" data-action="go-result" aria-current="step"><span class="step-tab__title">4 계산 결과</span><span class="step-tab__status">입력 중</span></button>
       </nav>
-      <div class="section-stack result-layout">
-        <div class="result-layout__left">
-          <article class="available-hero">
-            <p class="available-hero__label">남은 생활비</p>
-            <p class="available-hero__value" data-output="available-amount">0원</p>
-            <p class="available-hero__meta">오늘부터 <span data-output="remaining-days">0</span>일 동안</p>
-            <div class="daily-budget-highlight">
-              <span class="daily-budget-highlight__label">하루 사용 가능</span>
-              <strong class="daily-budget-highlight__value" data-output="daily-budget">0원</strong>
-            </div>
-          </article>
-          <aside class="notice notice--danger" data-warning="zero-available" role="alert" hidden><p>고정비와 저축이 예상 실수령액보다 커요.</p></aside>
-        </div>
-        <div class="result-layout__right">
-          <article class="content-card calculation-detail">
-            <h3 class="card-title">월급에서 이렇게 빠졌어요</h3>
-            <dl class="subtraction-card">
-              <div class="subtraction-row"><dt>예상 실수령액</dt><dd data-output="result-take-home">+ 0원</dd></div>
-              <div class="subtraction-row subtraction-row--negative"><dt>고정비</dt><dd data-output="result-fixed-expenses">− 0원</dd></div>
-              <div class="subtraction-row subtraction-row--negative"><dt>저축</dt><dd data-output="result-saving">− 0원</dd></div>
-              <div class="subtraction-row subtraction-row--total"><dt>가용 금액</dt><dd data-output="result-available">0원</dd></div>
-            </dl>
-          </article>
-          <aside class="notice"><p>가용 자금은 입력값을 기반으로 한 참고용 추정치예요.</p></aside>
-          <button class="secondary-button" type="button" data-action="go-home">완료</button>
-          <div class="sticky-actions"><button class="primary-button" type="button" data-action="open-ai-plan">이 돈으로 소비 계획 세우기</button></div>
-        </div>
+      <p class="screen-subtitle">이번 달에 실제로 쓸 수 있는 돈이에요.</p>
+      <div class="section-stack">
+        <article class="available-hero">
+          <p class="available-hero__label">이번 달 진짜 가용 자금</p>
+          <p class="available-hero__value" data-output="available-amount">0원</p>
+          <span class="sr-only" data-output="remaining-days">0</span>
+        </article>
+        <aside class="notice notice--danger" data-warning="zero-available" role="alert" hidden><p>고정비와 저축이 예상 실수령액보다 커요.</p></aside>
+        <article class="content-card">
+          <h3 class="card-title">하루 예산</h3>
+          <p class="card-value-line" data-output="result-daily-summary">0원 · 0일 기준</p>
+        </article>
+        <article class="content-card">
+          <h3 class="card-title">계산 근거</h3>
+          <p class="card-value-line" data-output="result-formula-summary">0원</p>
+        </article>
+        <button class="link-card afford-entry-card" type="button" data-action="open-ai-plan"><span><span class="link-card__title">✦ AI와 활용 계획 세우기</span><span class="link-card__description">남은 돈을 목표에 맞게 나눠볼까요?</span></span><span class="link-card__arrow" aria-hidden="true">→</span></button>
+        <aside class="notice"><p>가용 자금은 입력값을 기반으로 한 참고용 추정치예요.</p></aside>
       </div>
+      <div class="sticky-actions"><button class="primary-button" type="button" data-action="go-home">완료</button></div>
     </section>
 
     <section class="screen" data-screen="ai-plan" aria-labelledby="ai-plan-title" hidden>
       <header class="screen-header">
         <div class="screen-header__top"><button class="back-button" type="button" data-action="back-from-plan" aria-label="이전 화면으로 돌아가기">←</button></div>
-        <p class="screen-header__eyebrow">계획을 넣어보세요</p>
-        <h2 id="ai-plan-title">이거 사도 될까?</h2>
-        <p>여행, 쇼핑, 비상금이 내 하루 예산을 얼마나 바꾸는지 바로 확인해요.</p>
+        <h2 id="ai-plan-title">AI 활용 계획</h2>
       </header>
-      <div class="screen__content">
-        <div class="ai-plan-layout__left">
+      <div class="section-stack">
+        <article class="available-hero">
+          <p class="available-hero__label">이번 달 가용 자금</p>
+          <p class="available-hero__value" data-output="ai-plan-available">0원</p>
+          <p class="available-hero__meta" data-output="ai-plan-current-daily">현재 하루 예산 0원 · 0일</p>
+        </article>
+
+        <div class="plan-input-block">
+          <div class="section-heading"><p>이번 달 특별 지출이나 모으고 싶은 목표가 있나요?</p></div>
           <div class="plan-input">
             <label class="sr-only" for="goal-text">이번 달 목표</label>
-            <textarea id="goal-text" name="goalText" data-field="goal-text" placeholder="이번 달 제주도 여행 30만원, 비상금 20만원"></textarea>
-            <p class="plan-input__caption" data-output="plan-input-caption">여행, 비상금처럼 목적과 금액을 적어보세요</p>
+            <textarea id="goal-text" name="goalText" data-field="goal-text" placeholder="예) 이번 달 말에 여행 30만 원, 비상금 20만 원을 모으고 싶어요."></textarea>
           </div>
-          <div class="parsed-chips" data-output="parsed-chips" hidden></div>
+          <div class="plan-input-actions">
+            <button class="primary-button" type="button" data-action="submit-plan">계획 세우기</button>
+            <button class="secondary-button" type="button" data-action="fill-plan-example">예시</button>
+          </div>
         </div>
-        <div class="ai-plan-layout__right">
-          <article class="simulator-impact">
-            <h3 class="simulator-impact__title">반영하면 하루 예산은</h3>
-            <div class="budget-comparison">
-              <div class="budget-comparison__before"><span>현재</span><strong data-output="original-daily-budget">0원</strong></div>
-              <span class="budget-comparison__arrow" aria-hidden="true">→</span>
-              <div class="budget-comparison__after"><span>반영 후</span><strong data-output="adjusted-daily-budget">0원</strong></div>
-            </div>
-            <p class="budget-decrease-badge">하루 <span data-output="budget-decrease">0원</span> 감소</p>
-          </article>
 
-          <details class="optional-products">
-            <summary><span>저축상품 후보 보기</span><span class="optional-products__action">선택</span></summary>
-            <div class="optional-products__body">
-              <div class="section-heading"><h3 id="products-title" class="sr-only">저축상품 후보</h3><p>월 <span data-output="monthly-goal-total">0원</span> 목표에 맞춰 골라봤어요.</p></div>
-              <div class="toggle-row"><span>급할 때 꺼내 쓸 수 있어야 해요</span><label class="toggle-switch"><input type="checkbox" data-field="instant-withdraw" data-action="toggle-instant-withdraw" /><span class="toggle-switch__track"></span><span class="sr-only">수시 출금 상품 우선</span></label></div>
-              <div class="product-list" data-output="product-list"></div>
-              <p class="product-note">금리 기준일 2026-08-01 · 가입 전 실제 조건을 꼭 확인하세요.</p>
+        <article class="content-card">
+          <h3 class="card-title">배분안</h3>
+          <div class="stacked-fields">
+            <dl class="goal-list" data-output="ai-plan-allocations"></dl>
+            <div class="adjusted-budget-panel">
+              <div class="adjusted-budget-panel__main">
+                <span class="adjusted-budget-panel__label">조정된 하루 예산</span>
+                <strong class="adjusted-budget-panel__value" data-output="adjusted-daily-budget">0원</strong>
+              </div>
+              <div class="adjusted-budget-panel__original">
+                <s data-output="original-daily-budget">0원</s>
+                <span class="adjusted-budget-panel__original-caption">에서 조정</span>
+              </div>
             </div>
-            <aside class="notice"><p>상품 정보는 프로토타입용 예시이며 가입 권유나 금융 자문이 아니에요.</p></aside>
-          </details>
+          </div>
+        </article>
 
-          <div class="sticky-actions"><button class="primary-button" type="button" data-action="apply-plan" disabled>내 예산에 반영하기</button></div>
-        </div>
+        <article class="content-card">
+          <h3 class="card-title">저축상품 후보</h3>
+          <div class="stacked-fields">
+            <div class="section-heading"><h4 id="products-title" class="sr-only">저축상품 후보</h4><p>월 <span data-output="monthly-goal-total">0원</span> 목표에 맞춰 골라봤어요.</p></div>
+            <div class="toggle-row"><span>급할 때 꺼내 쓸 수 있어야 해요</span><label class="toggle-switch"><input type="checkbox" data-field="instant-withdraw" data-action="toggle-instant-withdraw" /><span class="toggle-switch__track"></span><span class="sr-only">수시 출금 상품 우선</span></label></div>
+            <div class="product-list" data-output="product-list"></div>
+            <p class="product-note">금리 기준일 2026-08-01 · 가입 전 실제 조건을 꼭 확인하세요.</p>
+          </div>
+        </article>
+        <aside class="notice"><p>상품 정보는 프로토타입용 예시이며 가입 권유나 금융 자문이 아니에요.</p></aside>
       </div>
+      <div class="sticky-actions"><button class="primary-button" type="button" data-action="apply-plan" disabled>계획 반영하고 결과로 돌아가기</button></div>
     </section>
 
     <section class="screen" data-screen="ai-result" aria-labelledby="ai-result-title" hidden>
