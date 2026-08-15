@@ -579,7 +579,7 @@ function handleCoachAdviceSuccess(modal, context, advice) {
   setHidden('[data-output="afford-coach-fallback"]', true, modal);
   setCoachControlsDisabled(modal, false);
 
-  const { evaluation, paymentAmount, availableFunds, dailyBudget } = context;
+  const { evaluation, paymentAmount, availableFunds, dailyBudget, remainingDays } = context;
   const statusKey = AFFORD_STATUS_KEY[evaluation.status];
   if (!statusKey) return;
   setHidden(`[data-status="${statusKey}"]`, false, modal);
@@ -597,7 +597,7 @@ function handleCoachAdviceSuccess(modal, context, advice) {
     setText(
       '[data-output="afford-caution-message"]',
       explanation
-        || `다음 ${evaluation.absorptionDays}일 하루 ${formatMoneyInput(evaluation.savingPerDay)}원씩 아끼면 나눠서 흡수돼요.`,
+        || `남은 ${remainingDays}일 동안 하루 ${formatMoneyInput(Math.max(0, dailyBudget - evaluation.adjustedDailyBudget))}원씩 줄어들어요.`,
       modal,
     );
     const recommendedOption = sanitizeCoachOption(advice?.recommendedOption, paymentAmount);
@@ -631,7 +631,7 @@ function handleCoachAdviceFailure(modal, context) {
   setCoachControlsDisabled(modal, false);
   pendingCoachOption = null;
 
-  const { evaluation, paymentAmount, availableFunds, dailyBudget } = context;
+  const { evaluation, paymentAmount, availableFunds, dailyBudget, remainingDays } = context;
   const statusKey = AFFORD_STATUS_KEY[evaluation.status];
   if (!statusKey) return;
   setHidden(`[data-status="${statusKey}"]`, false, modal);
@@ -653,7 +653,7 @@ function handleCoachAdviceFailure(modal, context) {
     setText('[data-output="afford-caution-remaining"]', formatSignedMoney(evaluation.remainingAfterPayment), modal);
     setText(
       '[data-output="afford-caution-message"]',
-      `다음 ${evaluation.absorptionDays}일 하루 ${formatMoneyInput(evaluation.savingPerDay)}원씩 아끼면 나눠서 흡수돼요.`,
+      `남은 ${remainingDays}일 동안 하루 ${formatMoneyInput(Math.max(0, dailyBudget - evaluation.adjustedDailyBudget))}원씩 줄어들어요.`,
       modal,
     );
     query('[data-output="afford-caution-options"]', modal)?.replaceChildren();

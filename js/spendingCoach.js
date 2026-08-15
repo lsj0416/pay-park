@@ -90,15 +90,16 @@ function buildSafeAdvice(evaluation) {
   };
 }
 
-function buildCautionAdvice(evaluation, paymentAmount, dailyBudget) {
+function buildCautionAdvice(evaluation, paymentAmount, dailyBudget, remainingDays) {
+  const perDayDecrease = Math.max(0, dailyBudget - evaluation.adjustedDailyBudget);
   return {
-    explanation: "오늘 하루 예산을 넘는 결제예요. 며칠에 나눠서 흡수하거나 금액을 낮추는 방법이 있어요.",
+    explanation: "오늘 하루 예산을 넘는 결제예요. 남은 기간 동안 자연스럽게 나눠서 흡수하거나, 금액을 낮추는 방법이 있어요.",
     recommendedOption: {
       id: "recommended-absorb",
-      title: `${evaluation.absorptionDays}일간 하루 ${formatWon(evaluation.savingPerDay)}원씩 조정`,
-      description: `결제액은 그대로 유지하고, 초과분 ${formatWon(evaluation.excessAmount)}원을 ${evaluation.absorptionDays}일에 나눠 하루 예산에서 흡수해요.`,
-      adjustmentDays: evaluation.absorptionDays,
-      adjustmentAmount: evaluation.savingPerDay,
+      title: `남은 ${remainingDays}일 동안 하루 ${formatWon(perDayDecrease)}원씩 조정`,
+      description: `결제액은 그대로 유지하고, 남은 ${remainingDays}일 동안 하루 예산이 ${formatWon(evaluation.adjustedDailyBudget)}원으로 자연스럽게 줄어들어요.`,
+      adjustmentDays: remainingDays,
+      adjustmentAmount: perDayDecrease,
       commitAmount: paymentAmount,
     },
     alternatives: [
@@ -153,7 +154,7 @@ export function getSpendingCoachAdvice({
       if (status === "SAFE") {
         advice = buildSafeAdvice(evaluation);
       } else if (status === "CAUTION") {
-        advice = buildCautionAdvice(evaluation, paymentAmount, dailyBudget);
+        advice = buildCautionAdvice(evaluation, paymentAmount, dailyBudget, remainingDays);
       } else {
         advice = buildOverBudgetAdvice(evaluation, paymentAmount);
       }
