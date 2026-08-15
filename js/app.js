@@ -341,15 +341,25 @@ function orderedProducts(plan) {
 
 function planWithDaily(plan, state = appState) {
   if (!plan) return null;
-  const adjusted = dailyFor(plan.remainingLiving, state);
-  return { ...plan, adjustedDailyBudget: adjusted.dailyBudget };
+  const goalsTotal = plan.goals.reduce((sum, goal) => sum + toWon(goal.amount), 0);
+  const remainingLiving = Math.max(
+    0,
+    currentBudget(state).availableAmount - sumPurchases(state.purchases) - goalsTotal,
+  );
+  const adjusted = dailyFor(remainingLiving, state);
+  return { ...plan, remainingLiving, adjustedDailyBudget: adjusted.dailyBudget };
+}
+
+function planningBaseAmount(state = appState) {
+  return currentBudget(state).availableAmount - sumPurchases(state.purchases);
 }
 
 function renderPlan(state) {
   const result = currentBudget(state);
-  const daily = dailyFor(result.availableAmount, state);
+  const planningBase = planningBaseAmount(state);
+  const daily = dailyFor(planningBase, state);
   setText('[data-output="original-daily-budget"]', renderMoney(daily.dailyBudget));
-  setText('[data-output="ai-plan-available"]', renderMoney(result.availableAmount));
+  setText('[data-output="ai-plan-available"]', renderMoney(planningBase));
   setText(
     '[data-output="ai-plan-current-daily"]',
     `현재 하루 예산 ${renderMoney(daily.dailyBudget)} · ${daily.remainingDays}일`,
@@ -385,7 +395,7 @@ function applyGoalText(text) {
   const goalText = String(text ?? "").trim();
   const hadPlan = Boolean(draftPlan);
   draftPlan = goalText
-    ? planWithDaily(buildPlan(goalText, currentBudget(appState).availableAmount), appState)
+    ? planWithDaily(buildPlan(goalText, planningBaseAmount(appState)), appState)
     : null;
   renderPlan(appState);
   if (!hadPlan && draftPlan) {
@@ -436,10 +446,8 @@ function renderHome(state) {
   const daily = dailyFor(result.availableAmount, state);
   const plan = state.plan ? planWithDaily(state.plan, state) : null;
   const purchasesTotal = sumPurchases(state.purchases);
-  const effectiveAvailable = (plan ? plan.remainingLiving : result.availableAmount) - purchasesTotal;
-  const homeDailyBudget = purchasesTotal > 0
-    ? dailyFor(effectiveAvailable, state).dailyBudget
-    : (plan ? plan.adjustedDailyBudget : daily.dailyBudget);
+  const effectiveAvailable = plan ? plan.remainingLiving : result.availableAmount - purchasesTotal;
+  const homeDailyBudget = dailyFor(effectiveAvailable, state).dailyBudget;
   const percent = result.estimatedTakeHome > 0
     ? Math.min(100, Math.max(0, Math.round((effectiveAvailable / result.estimatedTakeHome) * 100)))
     : 0;
@@ -457,7 +465,7 @@ function renderHome(state) {
     { label: "− 저축·투자", amount: result.savingCommitment },
   ];
   if (plan) {
-    const planTotal = result.availableAmount - plan.remainingLiving;
+    const planTotal = plan.goals.reduce((sum, goal) => sum + toWon(goal.amount), 0);
     detailRows.push({ label: "− AI 활용 계획", amount: planTotal });
   }
   state.purchases.forEach((item) => {
@@ -493,9 +501,9 @@ function formatSignedMoney(value) {
 }
 
 function availableFundsForAffordCheck(state = appState) {
-  const result = currentBudget(state);
   const plan = state.plan ? planWithDaily(state.plan, state) : null;
-  return (plan ? plan.remainingLiving : result.availableAmount) - sumPurchases(state.purchases);
+  if (plan) return plan.remainingLiving;
+  return currentBudget(state).availableAmount - sumPurchases(state.purchases);
 }
 
 // AI가 제안한 commitAmount를 신뢰하지 않고, 없거나 비정상이면 검증된 결제액으로 대체한다.
